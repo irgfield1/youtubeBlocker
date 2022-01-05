@@ -1,7 +1,7 @@
 # Youtube Tracker Extension
 ## Purpose
-Youtube Tracker Extension [the extension] is intended to practice the tools necessary to build an effective youtube blocker\
-This extension is a __prototype__
+Youtube Tracker/Blocker is intended to effectively block specific youtube videos, or allow only specific videos
+
 
 ## Known Bugs
 Whitelist/blacklist implementation is buggy
