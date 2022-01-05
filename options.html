@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <link rel="stylesheet" href="options.css" />
+
+</head>
+
+<body margin="25px">
+    <div class="select_text">
+        <h3 class="title">Youtube History</h3>
+        <div class="blockable_url_list">
+
+
+        </div>
+        <ul class="hList"></ul>
+    </div>
+    <div>
+        <input type="text" id="blockWeb" name="website" class="resized_textbox">
+        <!-- <textarea rows="1" cols="50"></textarea> -->
+        <button type="button" class="postButton" id="postBtn">Block</button>
+    </div>
+    <div>
+        <button type="button" class="checksButton">Show Checkbox Style</button>
+        <div id="tabs-list"></div>
+
+    </div>
+    <div>
+        <form>
+            <input type="radio" id="blacklist" name="proxy_style" value="BlackList">
+            <label for="blacklist">Blacklist</label><br>
+            <input type="radio" id="split" name="proxy_style" value="Split">
+            <label for="split">Split</label><br>
+            <input type="radio" id="whitelist" name="proxy_style" value="WhiteList">
+            <label for="whitelist">Whitelist</label><br>
+            <button type="submit">Change Style</button>
+        </form>
+    </div>
+
+    <script src=options.js></script>
+</body>
+
+</html>
