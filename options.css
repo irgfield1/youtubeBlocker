@@ -1,0 +1,34 @@
+.select_disabled{
+    user-select: none; /* For Chrome and Opera */
+   -ms-user-select: none; /* For Internet Edge and Explorer*/
+   -webkit-user-select: none; /* For Safari */
+   -moz-user-select: none; /* For Firefox */
+   -khtml-user-select: none; /* Konqueror HTML */
+}
+
+.select_auto{
+    user-select: auto; /* supported by Chrome and Opera */
+     -webkit-user-select: auto; /* Safari */
+     -khtml-user-select: auto; /* Konqueror HTML */
+     -moz-user-select: auto; /* Firefox */
+     -ms-user-select: auto; /* Internet Explorer/Edge */
+  }
+
+  .select_text{
+    user-select: text; /* supported by Chrome and Opera */
+     /* -webkit-user-select: auto; /* Safari 
+     -khtml-user-select: auto; /* Konqueror HTML *
+     -moz-user-select: auto; /* Firefox *
+     -ms-user-select: auto; Internet Explorer/Edge */
+  }
+
+  .resized_textbox {width: 350px; height: 20px}
+
+  .hidden {
+    visibility: hidden;
+    opacity: 0;
+  }
+
+  body{
+      margin: 10px;
+  }
