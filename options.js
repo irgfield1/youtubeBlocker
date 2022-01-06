@@ -7,7 +7,7 @@ let radioStatus;
  * displays url : blocking pairs in options menu
  */
 function fillHtml() {
-    console.log("line 14 - last");
+    console.log("options.js - fill html");
     browser.storage.local.get(null)
         .then((data) => {
             if (typeof data != "undefined") {
@@ -114,9 +114,9 @@ function radioButtonHandler(e) {
     let contentToStore = {
         "radio": val
     };
-    if(val === "Whitelist") {
+    if (val === "Whitelist") {
         whitelistInit("allow");
-    } else if( val === "Blacklist") {
+    } else if (val === "Blacklist") {
         blocklistInit("block");
     }
     browser.storage.local.set(contentToStore);
@@ -125,7 +125,6 @@ function radioButtonHandler(e) {
 }
 
 function blocklistInit(value) {
-    alert(`allowing all nonlisted urls`)
     document.getElementById("postBtn").textContent = "Block";
 
     browser.storage.local.get(null)
@@ -154,7 +153,6 @@ function blocklistInit(value) {
 }
 
 function whitelistInit(value) {
-    alert(`Blocking all nonlisted urls`);
     document.getElementById("postBtn").textContent = "Allow"
     browser.storage.local.get(null)
         .then(data => {
@@ -212,27 +210,27 @@ const setLocalStorage = async (key) => {
     /**
      * Init function that sets browser extension UI event listeners
      */
-    let currentValue =  "";
+    let currentValue = "";
     const blockButton = document.getElementById('postBtn');
     const blockWebInputField = document.getElementById("blockWeb");
     const checkDisplayButton = document.getElementById("blockButton");
     const radios = document.getElementById("proxy_style_form")
 
     blockButton.addEventListener("click", () => {
-        if(currentValue) {
+        if (currentValue) {
             writeBlockToBrowser(currentValue);
         }
     });
     blockWebInputField.addEventListener("change", (e) => {
         currentValue = e.target.value;
     });
-    
+
     checkDisplayButton.addEventListener("click", fillHtmlChecks);
     /*let checklist = document.querySelectorAll(".checks");
     checklist.forEach(() => {
         console.log("beans");
     })*/
-    
+
     //console.log(radios);
     radios.addEventListener("change", radioButtonHandler);
     fillHtml();

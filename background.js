@@ -1,5 +1,5 @@
 
-let pattern = /(http(s)??\:\/\/)?(www\.)?((youtube\.com\/watch\?v=)|(youtu.be\/))([a-zA-Z0-9\-_])+/;
+let youtubeVideoPattern = /(http(s)??\:\/\/)?(www\.)?((youtube\.com\/watch\?v=)|(youtu.be\/))([a-zA-Z0-9\-_])+/;
 /*
 radioStatus - one of 3, 
 blacklist - all non listed are allowed, 
@@ -23,7 +23,7 @@ function write2Browser() {
             // console.log(tempUrl + " found in storage");
             return;
         } else {
-            if (pattern.test(tempUrl)) {
+            if (youtubeVideoPattern.test(tempUrl)) {
                 // console.log(pattern);
                 // console.log(tempUrl + " new youtube url");
                 let contentToStore = {};
@@ -59,6 +59,11 @@ function radioChangeListener(changes, area) {
 
 function handleProxyRequest2(requestInfo) {
     console.log(requestInfo);
+    if (requestInfo.url.includes("googlevideo")) {
+        let pos = requestInfo.url.indexOf("ei");
+        console.log(requestInfo.url.slice(pos, pos + 25));
+    }
+
     return new Promise(async (resolve, reject) => {
         let proxyObj = {};
         if (requestInfo.hasOwnProperty("originUrl")) {
@@ -113,7 +118,7 @@ function handleProxyRequest2(requestInfo) {
 function handleProxyRequest(requestInfo) {
     console.log(requestInfo);
     return new Promise(async (resolve, reject) => {
-        if (!pattern.test(requestInfo.originUrl)) {
+        if (!youtubeVideoPattern.test(requestInfo.originUrl)) {
             reject({ type: "direct" })
         }
         if (typeof radioStatus == "undefined") {
@@ -209,7 +214,7 @@ function whitelistProxyHandler(requestInfo) {
             .catch(err => {
                 console.error(err);
                 console.error(requestInfo.originUrl);
-                if (pattern.test(requestInfo.originUrl)) {
+                if (youtubeVideoPattern.test(requestInfo.originUrl)) {
                     requestInfo({ type: "http", host: "127.0.0.1", port: 65535 });
                 }
             });
@@ -252,7 +257,7 @@ browser.proxy.onError.addListener(error => {
 });
 
 // Listen for a request to open a webpage// calls on every https req
-browser.proxy.onRequest.addListener(handleProxyRequest, { urls: ["<all_urls>"] });
+browser.proxy.onRequest.addListener(handleProxyRequest2, { urls: ["<all_urls>"] });
 
 /***************EXTRA****************************/
 
