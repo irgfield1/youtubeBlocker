@@ -2,14 +2,16 @@
 let pattern = /(http(s)??\:\/\/)?(www\.)?((youtube\.com\/watch\?v=)|(youtu.be\/))([a-zA-Z0-9\-_])+/;
 let radioStatus;
 
-//displays url : blocking pairs in options menu
+
+/**
+ * displays url : blocking pairs in options menu
+ */
 function fillHtml() {
-    console.log("line 14 - last");
+    //console.log("line 14 - last");
     browser.storage.local.get(null)
         .then((data) => {
             if (typeof data != "undefined") {
-                let myList = document.querySelector('.hList');
-
+                let myList = document.getElementById('history');
                 clearHtmlList(myList);
 
                 for (let i = 0; i < Object.keys(data).length; i++) {
@@ -212,11 +214,23 @@ const setLocalStorage = async (key) => {
 
 //Executable code
 (() => {
-    const blockButton = document.querySelector('.postButton');
-    let myValue;
-    document.querySelector("#blockWeb").addEventListener("change", () => myValue = document.querySelector("#blockWeb").value);
-    blockButton.addEventListener("click", () => writeBlockToBrowser(myValue));
-    const checkDisplayButton = document.querySelector(".checksButton");
+    /**
+     * Init function that sets browser extension UI event listeners
+     */
+    let currentValue =  "";
+    const blockButton = document.getElementById('postBtn');
+    const blockWebInputField = document.getElementById("blockWeb");
+    const checkDisplayButton = document.getElementById("blockButton");
+
+    blockButton.addEventListener("click", () => {
+        if(currentValue) {
+            writeBlockToBrowser(currentValue);
+        }
+    });
+    blockWebInputField.addEventListener("change", (e) => {
+        currentValue = e.target.value;
+    });
+    
     checkDisplayButton.addEventListener("click", fillHtmlChecks);
     /*let checklist = document.querySelectorAll(".checks");
     checklist.forEach(() => {
