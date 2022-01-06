@@ -57,6 +57,58 @@ function radioChangeListener(changes, area) {
     console.log(area);
 }
 
+function handleProxyRequest2(requestInfo) {
+    console.log(requestInfo);
+    return new Promise(async (resolve, reject) => {
+        let proxyObj = {};
+        if (requestInfo.hasOwnProperty("originUrl")) {
+            if (!youtubeVideoPattern.test(requestInfo.originUrl)) {
+                proxyObj.type = "direct";
+                reject({ type: "direct" });
+            }
+            await readLocalStorage(requestInfo.originUrl)
+                .then(data => {//found in storage
+                    console.log("found in storage");
+                    if (data == "allow") {
+                        console.log("pass");
+                        proxyObj = { type: "direct", url: requestInfo.originUrl, destUrl: requestInfo.url };
+                        reject({ type: "direct" });
+                    } else if (data == "block") {
+                        console.log("proxy");
+                        proxyObj = { type: "http", host: "127.0.0.1", port: 65535, url: requestInfo.originUrl, destUrl: requestInfo.url };
+                        resolve({ type: "http", host: "127.0.0.1", port: 65535 });
+                    }
+                }, async data => {//not found in storage
+                    if (typeof radioStatus == "undefined") {
+                        radioStatus = (await readLocalStorage("radio")).toLowerCase();
+
+                    }
+                    console.log("not found in storage");
+                    if (radioStatus == "blacklist") {
+                        console.log("pass");
+                        proxyObj = { type: "direct", url: requestInfo.originUrl, destUrl: requestInfo.url };
+                        reject({ type: "direct" })
+                    } else if (radioStatus == "whitelist") {
+                        console.log("proxy");
+                        proxyObj = { type: "http", host: "127.0.0.1", port: 65535, url: requestInfo.originUrl, destUrl: requestInfo.url };
+                        resolve({ type: "http", host: "127.0.0.1", port: 65535 })
+                    }
+                });
+            console.log(proxyObj);
+            if (proxyObj.hasOwnProperty("port")) {
+                console.log("block");
+                resolve({ type: "http", host: "127.0.0.1", port: 65535 })
+            } else {
+                console.log("pass");
+                reject({ type: "direct" })
+            }
+            console.log("unreachable");
+        } else {
+            reject({ type: "direct" });
+        }
+    })
+}
+
 //checks for url match, and proxys the whole page based on originURL
 function handleProxyRequest(requestInfo) {
     console.log(requestInfo);
