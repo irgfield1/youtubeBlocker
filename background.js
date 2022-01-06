@@ -26,9 +26,11 @@ function write2Browser() {
             if (youtubeVideoPattern.test(tempUrl)) {
                 // console.log(pattern);
                 // console.log(tempUrl + " new youtube url");
+
                 let contentToStore = {};
                 contentToStore[tempUrl] = "allow";
                 browser.storage.local.set(contentToStore);
+
             } else {
                 // console.log(tempUrl + " not youtube");
             }
@@ -56,13 +58,54 @@ function radioChangeListener(changes, area) {
     console.log(radioStatus);
     console.log(area);
 }
+function handleProxyRequest3(requestInfo) {
+    console.log(requestInfo);
+    return new Promise((resolve, reject) => {
+        if (!requestInfo.url.includes("googlevideo")) {
+            console.log("Not block worthy");
+            reject({ type: "direct" });
+        }
+        browser.tabs.query({ active: true }).then(async (tabs) => {
+            let tempUrl = tabs[0].url.slice();
+            await readLocalStorage(tempUrl)
+                .then(data => {//found in storage
+                    if (data == "allow") {
+                        console.log("pass");
+                        reject({ type: "direct" });
+                    } else if (data == "block") {
+                        console.log("proxy");
+                        resolve({ type: "http", host: "127.0.0.1", port: 65535 });
+                    }
+                }, async data => {//not found in storage
+                    if (typeof radioStatus == "undefined") {
+                        radioStatus = (await readLocalStorage("radio")).toLowerCase();
+
+                    }
+                    console.log("not found in storage");
+                    if (radioStatus == "blacklist") {
+                        console.log("pass");
+                        reject({ type: "direct" })
+                    } else if (radioStatus == "whitelist") {
+                        console.log("proxy");
+                        resolve({ type: "http", host: "127.0.0.1", port: 65535 })
+                    }
+                });
+        });
+    });
+}
+
 
 function handleProxyRequest2(requestInfo) {
     console.log(requestInfo);
     if (requestInfo.url.includes("googlevideo")) {
         let pos = requestInfo.url.indexOf("ei");
-        console.log(requestInfo.url.slice(pos, pos + 25));
+        let contentToStore = {};
+        vidID = requestInfo.url.slice(pos, pos + 25);
+        console.log(vidID);
+        contentToStore[vidID] = ["allow", requestInfo.originUrl];
+        browser.storage.local.set(contentToStore);
     }
+
 
     return new Promise(async (resolve, reject) => {
         let proxyObj = {};
@@ -71,6 +114,15 @@ function handleProxyRequest2(requestInfo) {
                 proxyObj.type = "direct";
                 reject({ type: "direct" });
             }
+            Promise.allSettled([readLocalStorage(requestInfo.originUrl), browser.tabs.query({ active: true })]).then(results => {
+                console.log(results);
+                let readStrgResult = results[0];
+                let browserTabResult = results[1];
+                console.log(readStrgResult);
+                console.log(brow);
+
+
+            })
             await readLocalStorage(requestInfo.originUrl)
                 .then(data => {//found in storage
                     console.log("found in storage");
@@ -257,7 +309,7 @@ browser.proxy.onError.addListener(error => {
 });
 
 // Listen for a request to open a webpage// calls on every https req
-browser.proxy.onRequest.addListener(handleProxyRequest2, { urls: ["<all_urls>"] });
+browser.proxy.onRequest.addListener(handleProxyRequest3, { urls: ["<all_urls>"] });
 
 /***************EXTRA****************************/
 
