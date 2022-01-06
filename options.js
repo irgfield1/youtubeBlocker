@@ -7,7 +7,7 @@ let radioStatus;
  * displays url : blocking pairs in options menu
  */
 function fillHtml() {
-    //console.log("line 14 - last");
+    console.log("line 14 - last");
     browser.storage.local.get(null)
         .then((data) => {
             if (typeof data != "undefined") {
@@ -110,19 +110,14 @@ function writeBlockToBrowser(tab) {
 //switches status in storage.local
 function radioButtonHandler(e) {
     e.preventDefault();
-    let radios = document.querySelector("form");
-    let contentToStore = {};
-    if (radios != "undefined") {
-        if (radios[0].checked) {
-            contentToStore["radio"] = radios[0].value;
-            blocklistInit("block")
-        } else if (radios[1].checked) {
-            contentToStore["radio"] = radios[1].value;
-
-        } else if (radios[2].checked) {
-            contentToStore["radio"] = radios[2].value;
-            whitelistInit("allow")
-        }
+    let val = e.target.value;
+    let contentToStore = {
+        "radio": val
+    };
+    if(val === "Whitelist") {
+        whitelistInit("allow");
+    } else if( val === "Blacklist") {
+        blocklistInit("block");
     }
     browser.storage.local.set(contentToStore);
 
@@ -221,6 +216,7 @@ const setLocalStorage = async (key) => {
     const blockButton = document.getElementById('postBtn');
     const blockWebInputField = document.getElementById("blockWeb");
     const checkDisplayButton = document.getElementById("blockButton");
+    const radios = document.getElementById("proxy_style_form")
 
     blockButton.addEventListener("click", () => {
         if(currentValue) {
@@ -236,10 +232,10 @@ const setLocalStorage = async (key) => {
     checklist.forEach(() => {
         console.log("beans");
     })*/
-    fillHtml();
-    let radios = document.querySelector("form");
+    
     //console.log(radios);
-    radios.addEventListener("submit", radioButtonHandler)
+    radios.addEventListener("change", radioButtonHandler);
+    fillHtml();
 
     // fillHtml();
 })();
