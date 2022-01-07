@@ -30,12 +30,12 @@ function fillHtml() {
 
     readLocalStorage("radio")
         .then(data => {
-            // console.log(data);//just the value associated with radio
             let value = data.toLowerCase();
-            // console.log(value);
             let myRadio = document.getElementById(value);
             myRadio.checked = "true";
-
+            if (myRadio.value.toLowerCase() == "whitelist") {
+                document.getElementById("postBtn").textContent = "Allow";
+            }
         })
         .catch(() => {
             let myRadio = document.getElementById("split");
@@ -59,10 +59,7 @@ function fillHtmlChecks() {
                     const html =
                         `<input type="checkbox" id="youtubeURL${i}" class="checks" ${Object.values(data)[i] == "allow" ? "checked" : ""} name="url${i}" value="${Object.keys(data)[i]}">
                          <label for="youtubeURL${i}" id="checkboxLabel${i}"> ${Object.keys(data)[i]} : ${Object.values(data)[i]}</label><br>`;
-
                     myList.innerHTML += html;
-                    //addListener(i);
-                    // document.querySelector(`#youtubeURL${i}`).addEventListener('input', checkListener);
 
                 }
                 let checklist = document.querySelectorAll(".checks");
@@ -76,8 +73,7 @@ function fillHtmlChecks() {
 
                         browser.storage.local.set(contentToStore);
                         document.getElementById(`checkboxLabel${i}`).innerHTML = `${Object.keys(data)[i]} : ${urlBlockStatus}`;
-                        // console.log(document.querySelector(`#youtubeURL${i}`).checked);
-                        // console.log(Object.keys(data)[i]);
+
                     });
                 }
 
@@ -99,7 +95,7 @@ function writeBlockToBrowser(tab) {
     if (pattern.test(tab)) {
         console.log(tab + " new youtube url");
         let contentToStore = {};
-        contentToStore[tab] = "block";
+        contentToStore[tab] = document.getElementById("postBtn").textContent.toLowerCase();
         browser.storage.local.set(contentToStore);
         fillHtml();
     } else {
@@ -121,7 +117,6 @@ function radioButtonHandler(e) {
     }
     browser.storage.local.set(contentToStore);
 
-    //TODO change event listener based on radio button input
 }
 
 function blocklistInit(value) {
@@ -133,23 +128,14 @@ function blocklistInit(value) {
             for (let i = 0; i < Object.keys(data).length; i++) {
                 if (Object.keys(data)[i] == "radio") {
                     continue;
-                } else {
-
                 }
                 contentToStore[Object.keys(data)[i]] = "block";
             }
             return contentToStore;
-
-
         })
         .then(data => {
             browser.storage.local.set(data);
         });
-    // if (confirm(`Changing to ${value} mode`)) {
-    //     console.log("Changed!!");
-    // } else {
-    //     console.log("¡¡Avoided!!");
-    // }
 }
 
 function whitelistInit(value) {
@@ -160,31 +146,14 @@ function whitelistInit(value) {
             for (let i = 0; i < Object.keys(data).length; i++) {
                 if (Object.keys(data)[i] == "radio") {
                     continue;
-                } else {
-
                 }
                 contentToStore[Object.keys(data)[i]] = "allow";
             }
             return contentToStore;
-
-
         })
         .then(data => {
             browser.storage.local.set(data);
         });
-    //Change block button to allow button
-}
-
-function radioButtonStorage() {
-    return new Promise((resolve, reject) => {
-        readLocalStorage("radio")
-            .then(data => {
-                console.log(data);
-            })
-            .catch(err => {
-                console.error(err);
-            });
-    });
 }
 
 const readLocalStorage = async (key) => {
@@ -196,12 +165,6 @@ const readLocalStorage = async (key) => {
                 resolve(result[key]);
             }
         });
-    });
-};
-
-const setLocalStorage = async (key) => {
-    return new Promise((resolve, reject) => {
-        browser.storage.local.set(key).then(resolve()).catch(reject());
     });
 };
 
@@ -226,28 +189,8 @@ const setLocalStorage = async (key) => {
     });
 
     checkDisplayButton.addEventListener("click", fillHtmlChecks);
-    /*let checklist = document.querySelectorAll(".checks");
-    checklist.forEach(() => {
-        console.log("beans");
-    })*/
-
-    //console.log(radios);
     radios.addEventListener("change", radioButtonHandler);
     fillHtml();
-
-    // fillHtml();
 })();
 
-//EOF
-
-
-/**
- * Radio buttons switch between the way we've been doing it,
- *   blocklist with every currently listed website blocked
- *   and whitelist with every listed url allowed but nothing else
- *
- */
-
-
-//Get whitelist and blocklist to operate oppositely
-//Split is current situation
+//Test block/allow button

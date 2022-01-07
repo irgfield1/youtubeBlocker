@@ -109,15 +109,3 @@ browser.proxy.onError.addListener(error => {
 
 // Listen for a request to open a webpage// calls on every https req
 browser.proxy.onRequest.addListener(handleProxyRequest3, { urls: ["<all_urls>"] });
-
-/***************EXTRA****************************/
-
-/* mad useful
-browser.tabs.query({ windowId: myWindowId, active: true }).then((tabs) => {
-        let contentToStore = {};
-        contentToStore[tabs[0].url] = contentBox.textContent;
-        browser.storage.local.set(contentToStore);
-    });
-*/
-
-//Or maybe cause pulling from storage doesn't take too long just do that real quicky-icky
