@@ -1,11 +1,5 @@
 
 let youtubeVideoPattern = /(http(s)??\:\/\/)?(www\.)?((youtube\.com\/watch\?v=)|(youtu.be\/))([a-zA-Z0-9\-_])+/;
-/*
-radioStatus - one of 3, 
-blacklist - all non listed are allowed, 
-whitelist - all nonlisted are blocked,
-split - add new urls when visiting a youtube page, default to allow
-*/
 let radioStatus;
 
 /*******************FUNCTIONS********************/
@@ -58,6 +52,7 @@ function radioChangeListener(changes, area) {
     console.log(radioStatus);
     console.log(area);
 }
+
 function handleProxyRequest3(requestInfo) {
     console.log(requestInfo);
     return new Promise((resolve, reject) => {
@@ -79,7 +74,6 @@ function handleProxyRequest3(requestInfo) {
                 }, async data => {//not found in storage
                     if (typeof radioStatus == "undefined") {
                         radioStatus = (await readLocalStorage("radio")).toLowerCase();
-
                     }
                     console.log("not found in storage");
                     if (radioStatus == "blacklist") {
@@ -94,199 +88,6 @@ function handleProxyRequest3(requestInfo) {
     });
 }
 
-
-function handleProxyRequest2(requestInfo) {
-    console.log(requestInfo);
-    if (requestInfo.url.includes("googlevideo")) {
-        let pos = requestInfo.url.indexOf("ei");
-        let contentToStore = {};
-        vidID = requestInfo.url.slice(pos, pos + 25);
-        console.log(vidID);
-        contentToStore[vidID] = ["allow", requestInfo.originUrl];
-        browser.storage.local.set(contentToStore);
-    }
-
-
-    return new Promise(async (resolve, reject) => {
-        let proxyObj = {};
-        if (requestInfo.hasOwnProperty("originUrl")) {
-            if (!youtubeVideoPattern.test(requestInfo.originUrl)) {
-                proxyObj.type = "direct";
-                reject({ type: "direct" });
-            }
-            Promise.allSettled([readLocalStorage(requestInfo.originUrl), browser.tabs.query({ active: true })]).then(results => {
-                console.log(results);
-                let readStrgResult = results[0];
-                let browserTabResult = results[1];
-                console.log(readStrgResult);
-                console.log(brow);
-
-
-            })
-            await readLocalStorage(requestInfo.originUrl)
-                .then(data => {//found in storage
-                    console.log("found in storage");
-                    if (data == "allow") {
-                        console.log("pass");
-                        proxyObj = { type: "direct", url: requestInfo.originUrl, destUrl: requestInfo.url };
-                        reject({ type: "direct" });
-                    } else if (data == "block") {
-                        console.log("proxy");
-                        proxyObj = { type: "http", host: "127.0.0.1", port: 65535, url: requestInfo.originUrl, destUrl: requestInfo.url };
-                        resolve({ type: "http", host: "127.0.0.1", port: 65535 });
-                    }
-                }, async data => {//not found in storage
-                    if (typeof radioStatus == "undefined") {
-                        radioStatus = (await readLocalStorage("radio")).toLowerCase();
-
-                    }
-                    console.log("not found in storage");
-                    if (radioStatus == "blacklist") {
-                        console.log("pass");
-                        proxyObj = { type: "direct", url: requestInfo.originUrl, destUrl: requestInfo.url };
-                        reject({ type: "direct" })
-                    } else if (radioStatus == "whitelist") {
-                        console.log("proxy");
-                        proxyObj = { type: "http", host: "127.0.0.1", port: 65535, url: requestInfo.originUrl, destUrl: requestInfo.url };
-                        resolve({ type: "http", host: "127.0.0.1", port: 65535 })
-                    }
-                });
-            console.log(proxyObj);
-            if (proxyObj.hasOwnProperty("port")) {
-                console.log("block");
-                resolve({ type: "http", host: "127.0.0.1", port: 65535 })
-            } else {
-                console.log("pass");
-                reject({ type: "direct" })
-            }
-            console.log("unreachable");
-        } else {
-            reject({ type: "direct" });
-        }
-    })
-}
-
-//checks for url match, and proxys the whole page based on originURL
-function handleProxyRequest(requestInfo) {
-    console.log(requestInfo);
-    return new Promise(async (resolve, reject) => {
-        if (!youtubeVideoPattern.test(requestInfo.originUrl)) {
-            reject({ type: "direct" })
-        }
-        if (typeof radioStatus == "undefined") {
-            radioStatus = (await readLocalStorage("radio")).toLowerCase();
-
-        }
-        if (radioStatus == "blacklist") {
-            console.log("line 75");
-            resolve(blacklistProxyHandler(requestInfo));
-        } else if (radioStatus == "split") {
-            console.log("line 78");
-        } else if (radioStatus == "whitelist") {
-            console.log("line81");
-            resolve(whitelistProxyHandler(requestInfo));
-        }
-        await browser.storage.local.get(requestInfo.originUrl)
-            .then(data => {
-                //console.log(data[requestInfo.originUrl]);
-                if (data[requestInfo.originUrl] == "block") {
-                    console.log("block");
-                    resolve({ type: "http", host: "127.0.0.1", port: 65535 });
-                } else {
-                    // console.log("pass through - ");
-                    reject({ type: "direct" });
-                }
-            })
-            .catch(err => console.error(err));
-
-
-    })
-    //return new Promise((resolve, reject) => {
-
-
-    //})
-
-
-    // // Read the web address of the page to be visited
-    // const url = new URL(requestInfo.originUrl);
-    // console.log(url.hostname);
-    // // Determine whether the domain in the web address is on the blocked hosts list
-    // if (blockedHosts.findIndex(requestInfo.originUrl) != -1) {
-
-    //     // Write details of the proxied host to the console and return the proxy address
-    //     console.log(`Proxying: ${requestInfo.url.hostname}`);
-    //     return { type: "http", host: "127.0.0.1", port: 65535 };
-    // }
-    // // Return instructions to open the requested webpage
-    // return { type: "direct" };
-}
-
-
-function blacklistProxyHandler(requestInfo) {
-    return new Promise(async (resolve, reject) => {
-        console.log("blacklist reqs");
-        await readLocalStorage(requestInfo.originUrl)
-            .then(data => {
-                if (data == "block") {
-                    resolve({ type: "http", host: "127.0.0.1", port: 65535 });
-
-                }
-                console.log(data[requestInfo.originUrl]);
-                if (data[requestInfo.originUrl] != "allow") {
-                    console.log("block");
-                    resolve({ type: "http", host: "127.0.0.1", port: 65535 });
-                } else {
-                    reject({ type: "direct" });
-                }
-            })
-            .catch(err => {
-                console.error(err)
-
-                reject({ type: "direct" })
-            });
-
-    })
-}
-
-function whitelistProxyHandler(requestInfo) {
-    return new Promise(async (resolve, reject) => {
-        console.log("whitelist reqs");
-        await readLocalStorage(requestInfo.originUrl)
-            .then(data => {
-                if (data == "allow") {
-                    reject({ type: "direct" });
-                }
-                console.log(data[requestInfo.originUrl]);
-                if (data[requestInfo.originUrl] == "block") {
-                    resolve({ type: "http", host: "127.0.0.1", port: 65535 });
-                } else {
-                    reject({ type: "direct" });
-                }
-            })
-            .catch(err => {
-                console.error(err);
-                console.error(requestInfo.originUrl);
-                if (youtubeVideoPattern.test(requestInfo.originUrl)) {
-                    requestInfo({ type: "http", host: "127.0.0.1", port: 65535 });
-                }
-            });
-
-    })
-}
-
-async function updateBlocklist() {
-    return new Promise((resolve, reject) => {
-        browser.storage.get()
-            .then(data => {
-
-            })
-            .catch(err => console.error(err));
-
-
-    })
-}
-
-
 /**************LISTENERS************************/
 
 //document.addEventListener("DOMContentLoaded", listHistory);
@@ -300,8 +101,6 @@ browser.tabs.onUpdated.addListener(() => {
 });
 
 browser.storage.onChanged.addListener(radioChangeListener)
-
-//New Stuff
 
 // Log any errors from the proxy script
 browser.proxy.onError.addListener(error => {
