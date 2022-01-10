@@ -38,13 +38,15 @@ function fillHtml() {
             }
         })
         .catch(() => {
-            let myRadio = document.getElementById("split");
+            let myRadio = document.getElementById("dynamic");
             myRadio.checked = true;
         })
 
 }
 
-//creates checkbox for each map entry, checkboxes toggle block status
+/**
+ * creates checkbox for each map entry, checkboxes toggle block status
+ */
 function fillHtmlChecks() {
     browser.storage.local.get(null)
         .then((data) => {
@@ -88,7 +90,9 @@ function clearHtmlList(list) {
     }
 }
 
-//block button handler for text field
+/**
+ * block button handler for text field
+ */
 function writeBlockToBrowser(tab) {
     console.log(tab);
     console.log(pattern.test(tab));

@@ -14,6 +14,9 @@ All modes allow individual block toggling
 
 This extension works on firefox
 
+## User guide
+Just step by step
+
 ## Known Bugs
 * Console thinks every reject({ type: "direct" }) piece is a real error and not just cause I haven't looked to see if I could change it
 * postBtn doesn't switch between allow and block persistently
@@ -21,6 +24,15 @@ This extension works on firefox
 * regex.match not working, using regex.test but not sure why
 * No CSS in options.css
 * No youtube api thus block channel functionality...
+
+## New features
+Have URL and video name - background function that has webpage access
+complex query selector\
+Toggle checkboxes - css hide and show\
+Remove URL\
+Button to save url to clipboard\
+Blocked by overlay on youtube video\
+
 
 ## Contact
 Isaac Garfield\
