@@ -22,6 +22,15 @@ This extension works on firefox
 * No CSS in options.css
 * No youtube api thus block channel functionality...
 
+## New features
+Have URL and video name - background function that has webpage access
+complex query selector\
+[X] Toggle checkboxes - css hide and show\
+Remove URL\
+Button to save url to clipboard\
+Blocked by overlay on youtube video\
+
+
 ## Contact
 Isaac Garfield\
 isaac.garfield@inferno-systems.com
