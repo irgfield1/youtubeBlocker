@@ -82,6 +82,24 @@ function fillHtmlChecks() {
         .catch(err => console.error(err));
 }
 
+function toggleChecksDisplay() {
+    fillHtml();
+    fillHtmlChecks();
+    let bulletList = document.getElementById("history");
+    let checksList = document.getElementById("checks");
+    let button = document.getElementById("blockButton");
+
+    if (bulletList.classList.contains("hidden")) {
+        bulletList.classList.remove("hidden");
+        checksList.classList.add("hidden");
+        button.textContent = "Checkbox Style";
+    } else {
+        bulletList.classList.add("hidden");
+        checksList.classList.remove("hidden");
+        button.textContent = "Bullets Style"
+    }
+}
+
 function clearHtmlList(list) {
     while (list.firstChild) {
         list.removeChild(list.firstChild);
@@ -98,6 +116,7 @@ function writeBlockToBrowser(tab) {
         contentToStore[tab] = document.getElementById("postBtn").textContent.toLowerCase();
         browser.storage.local.set(contentToStore);
         fillHtml();
+        fillHtmlChecks();
     } else {
         console.log(tab + " not youtube");
     }
@@ -188,7 +207,7 @@ const readLocalStorage = async (key) => {
         currentValue = e.target.value;
     });
 
-    checkDisplayButton.addEventListener("click", fillHtmlChecks);
+    checkDisplayButton.addEventListener("click", toggleChecksDisplay);
     radios.addEventListener("change", radioButtonHandler);
     fillHtml();
 })();

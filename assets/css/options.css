@@ -11,6 +11,7 @@
   .hidden {
     visibility: hidden;
     opacity: 0;
+    height: 0px;
   }
 
   body{
