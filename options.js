@@ -1,4 +1,5 @@
 'use strict'
+
 let pattern = /(http(s)??\:\/\/)?(www\.)?((youtube\.com\/watch\?v=)|(youtu.be\/))([a-zA-Z0-9\-_])+/;
 let radioStatus;
 
@@ -201,6 +202,8 @@ const readLocalStorage = async (key) => {
     blockButton.addEventListener("click", () => {
         if (currentValue) {
             writeBlockToBrowser(currentValue);
+            fetchStorage();
+
         }
     });
     blockWebInputField.addEventListener("change", (e) => {
