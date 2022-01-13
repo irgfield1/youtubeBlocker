@@ -1,23 +1,30 @@
 
 let youtubeVideoPattern = /(http(s)??\:\/\/)?(www\.)?((youtube\.com\/watch\?v=)|(youtu.be\/))([a-zA-Z0-9\-_])+/;
 
-function interpret(data) {
-    if (typeof data == "undefined") {
-        console.log("nodata");
-        return;
-    } else {
-        return JSON.parse(data);
-        // let j = data.split(';');
-        // console.log(j);
-        // let blocks = j[0].trim();
-        // let allows = j[1].trim();
-        // console.log(blocks);
-        // console.log(allows);
-        // console.log(arrayify(blocks));
-        // console.log(arrayify(allows));
-        // let contentToStore = { arrayify(blocks), arrayify(allows) }
-        // return;
+async function interpret(textAsset = "assets/blockfolder/data.txt") {
+    let content = await fetchStorage(textAsset);
+
+    console.log(Object.keys(content));
+    console.log(Object.values(content));
+    let contentToStore = {};
+    for (let i = 0; i < Object.keys(content).length; i++) {
+        if (Object.keys(content)[i].toLowerCase() == "allow") {
+            for (let j = 0; j < Object.values(content)[i].length; j++) {
+                contentToStore[Object.values(content)[i][j]] = "allow";
+            }
+
+
+        } else if (Object.keys(content)[i].toLowerCase() == "block") {
+            for (let j = 0; j < Object.values(content)[i].length; j++) {
+                contentToStore[Object.values(content)[i][j]] = "block";
+            }
+        } else {
+            continue;
+        }
     }
+    console.log(contentToStore);
+    browser.storage.local.set(contentToStore);
+    return;
 }
 
 function arrayify(myString) {
@@ -27,11 +34,6 @@ function arrayify(myString) {
     myString = myString.split(",").map(s => s.trim());
     contentToStore[blockStatus] = myString;
     return contentToStore;
-}
-
-function objectify(array1, array2) {
-
-
 }
 
 async function fetchStorage(textAsset = "assets/blockfolder/data.txt") {
@@ -47,6 +49,9 @@ async function fetchStorage(textAsset = "assets/blockfolder/data.txt") {
             let plainText = utf8Decoder.decode(codedText?.value);
             contentToStore = JSON.parse(plainText);
         });
+
+    let storage = await browser.storage.local.get();
+    console.log(storage);
 
     console.log(contentToStore);
     return contentToStore;

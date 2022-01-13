@@ -193,22 +193,37 @@ const readLocalStorage = async (key) => {
     /**
      * Init function that sets browser extension UI event listeners
      */
-    let currentValue = "";
+    let youtubeUrl = "";
+    let resourceUrl = "";
     const blockButton = document.getElementById('postBtn');
+
     const blockWebInputField = document.getElementById("blockWeb");
-    const checkDisplayButton = document.getElementById("blockButton");
+    const checkDisplayButton = document.getElementById("checksButton");
+    const addResourceButton = document.getElementById('strLoadBtn');
     const radios = document.getElementById("proxy_style_form")
 
     blockButton.addEventListener("click", () => {
-        if (currentValue) {
-            writeBlockToBrowser(currentValue);
-            fetchStorage();
+        if (youtubeUrl) {
+            writeBlockToBrowser(youtubeUrl);
 
         }
     });
     blockWebInputField.addEventListener("change", (e) => {
-        currentValue = e.target.value;
+        youtubeUrl = e.target.value;
     });
+
+    addResourceButton.addEventListener("click", () => {
+        console.log(resourceUrl);
+        if (typeof resourceUrl == "undefined" || resourceUrl.length < 1) {
+            interpret();
+        } else {
+            interpret(resourceUrl);
+        }
+    })
+    blockWebInputField.addEventListener("change", (e) => {
+        resourceUrl = e.target.value;
+    });
+
 
     checkDisplayButton.addEventListener("click", toggleChecksDisplay);
     radios.addEventListener("change", radioButtonHandler);
