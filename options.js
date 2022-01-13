@@ -196,9 +196,9 @@ const readLocalStorage = async (key) => {
     let youtubeUrl = "";
     let resourceUrl = "";
     const blockButton = document.getElementById('postBtn');
-
     const blockWebInputField = document.getElementById("blockWeb");
     const checkDisplayButton = document.getElementById("checksButton");
+    const clearStorageButton = document.getElementById("strClearBtn");
     const addResourceButton = document.getElementById('strLoadBtn');
     const radios = document.getElementById("proxy_style_form")
 
@@ -212,6 +212,11 @@ const readLocalStorage = async (key) => {
         youtubeUrl = e.target.value;
     });
 
+    checkDisplayButton.addEventListener("click", toggleChecksDisplay);
+    clearStorageButton.addEventListener("click", () => {
+        browser.storage.local.clear();
+    })
+
     addResourceButton.addEventListener("click", () => {
         console.log(resourceUrl);
         if (typeof resourceUrl == "undefined" || resourceUrl.length < 1) {
@@ -224,8 +229,6 @@ const readLocalStorage = async (key) => {
         resourceUrl = e.target.value;
     });
 
-
-    checkDisplayButton.addEventListener("click", toggleChecksDisplay);
     radios.addEventListener("change", radioButtonHandler);
     fillHtml();
 })();
