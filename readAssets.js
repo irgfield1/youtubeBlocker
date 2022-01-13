@@ -6,16 +6,17 @@ function interpret(data) {
         console.log("nodata");
         return;
     } else {
-        let j = data.split(';');
-        console.log(j);
-        let blocks = j[0].trim();
-        let allows = j[1].trim();
-        console.log(blocks);
-        console.log(allows);
-        console.log(arrayify(blocks));
-        console.log(arrayify(allows));
-        let contentToStore = { arrayify(blocks), arrayify(allows) }
-        return;
+        return JSON.parse(data);
+        // let j = data.split(';');
+        // console.log(j);
+        // let blocks = j[0].trim();
+        // let allows = j[1].trim();
+        // console.log(blocks);
+        // console.log(allows);
+        // console.log(arrayify(blocks));
+        // console.log(arrayify(allows));
+        // let contentToStore = { arrayify(blocks), arrayify(allows) }
+        // return;
     }
 }
 
@@ -33,17 +34,20 @@ function objectify(array1, array2) {
 
 }
 
-function fetchStorage(textAsset = "assets/blockfolder/data.txt") {
+async function fetchStorage(textAsset = "assets/blockfolder/data.txt") {
     // let textAsset = "assets/blockfolder/data.txt";
     console.log(textAsset);
+    let contentToStore = {};
 
-    fetch(textAsset)
+    await fetch(textAsset)
         .then(async data => {
-            let j = data.body.getReader();
-            let k = await j.read()
+            let dataReader = data.body.getReader();
+            let codedText = await dataReader.read()
             const utf8Decoder = new TextDecoder('utf-8');
-            let l = utf8Decoder.decode(k?.value);
-            interpret(l);
+            let plainText = utf8Decoder.decode(codedText?.value);
+            contentToStore = JSON.parse(plainText);
         });
 
+    console.log(contentToStore);
+    return contentToStore;
 }
