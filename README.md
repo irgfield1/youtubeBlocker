@@ -1,6 +1,6 @@
-# Youtube Tracker Extension
+# boring-youtube-blocker
 ## Purpose
-Youtube Tracker/Blocker is intended to effectively block specific youtube videos, or allow only specific videos\
+Allow only YouTube videos you want, block the rest. So boring!\
 \
 Youtube blocker uses the current url to know when to block any requests to google's video host\
 
