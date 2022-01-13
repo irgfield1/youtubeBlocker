@@ -59,11 +59,13 @@ function fillHtmlChecks() {
                     }
                     const html =
                         `<input type="checkbox" id="youtubeURL${i}" class="checks" ${Object.values(data)[i] == "allow" ? "checked" : ""} name="url${i}" value="${Object.keys(data)[i]}">
-                         <label for="youtubeURL${i}" id="checkboxLabel${i}"> ${Object.keys(data)[i]} : ${Object.values(data)[i]}</label><br>`;
+                         <label for="youtubeURL${i}" id="checkboxLabel${i}"> ${Object.keys(data)[i]} : ${Object.values(data)[i]}</label>
+                         <button id="clearBtn${i}" type="button" class="btn btn-outline-danger" align="right">Delete</button><br>`;
                     myList.innerHTML += html;
 
                 }
                 let checklist = document.querySelectorAll(".checks");
+                // Event listener for checkbox toggle
                 for (let i = 0; i < checklist.length; i++) {
                     checklist[i].addEventListener('input', async () => {
                         let myList = document.querySelector('.blockable_url_list');
@@ -76,6 +78,19 @@ function fillHtmlChecks() {
                         document.getElementById(`checkboxLabel${i}`).innerHTML = `${Object.keys(data)[i]} : ${urlBlockStatus}`;
 
                     });
+                }
+
+                for (let i = 0; i < checklist.length; i++) {
+                    document.getElementById(`clearBtn${i}`).addEventListener("click", async () => {
+                        console.log(`BOI${i}`);
+                        let checkboxBOI = document.getElementById(`youtubeURL${i}`);
+                        console.log(checkboxBOI.value);
+                        await browser.storage.local.remove(checkboxBOI.value);
+                        fillHtmlChecks();
+                        // Pair with appropriate youtubeUrl
+                        // browser.storage.local.remove("youtubeURL")
+
+                    })
                 }
 
             }
