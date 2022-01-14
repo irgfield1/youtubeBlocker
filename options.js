@@ -87,9 +87,6 @@ function fillHtmlChecks() {
                         console.log(checkboxBOI.value);
                         await browser.storage.local.remove(checkboxBOI.value);
                         fillHtmlChecks();
-                        // Pair with appropriate youtubeUrl
-                        // browser.storage.local.remove("youtubeURL")
-
                     })
                 }
 
@@ -116,6 +113,13 @@ function toggleChecksDisplay() {
     }
 }
 
+function updateHtml() {
+    fillHtml()
+    fillHtmlChecks();
+
+    let status = document.getElementById("history").classList.contains("hidden");
+}
+
 function clearHtmlList(list) {
     while (list.firstChild) {
         list.removeChild(list.firstChild);
@@ -139,23 +143,24 @@ function writeBlockToBrowser(tab) {
 }
 
 //switches status in storage.local
-function radioButtonHandler(e) {
+async function radioButtonHandler(e) {
     e.preventDefault();
     let val = e.target.value;
     let contentToStore = {
         "radio": val
     };
     if (val === "Whitelist") {
-        whitelistInit("allow");
+        blockmodeInit("Allow");
     } else if (val === "Blacklist") {
-        blocklistInit("block");
+        blockmodeInit("Block");
     }
-    browser.storage.local.set(contentToStore);
+    updateHtml();
+    await browser.storage.local.set(contentToStore);
 
 }
 
-function blocklistInit(value) {
-    document.getElementById("postBtn").textContent = "Block";
+function blockmodeInit(value) {
+    document.getElementById("postBtn").textContent = value;
 
     browser.storage.local.get(null)
         .then(data => {
@@ -164,25 +169,7 @@ function blocklistInit(value) {
                 if (Object.keys(data)[i] == "radio") {
                     continue;
                 }
-                contentToStore[Object.keys(data)[i]] = "block";
-            }
-            return contentToStore;
-        })
-        .then(data => {
-            browser.storage.local.set(data);
-        });
-}
-
-function whitelistInit(value) {
-    document.getElementById("postBtn").textContent = "Allow"
-    browser.storage.local.get(null)
-        .then(data => {
-            let contentToStore = {};
-            for (let i = 0; i < Object.keys(data).length; i++) {
-                if (Object.keys(data)[i] == "radio") {
-                    continue;
-                }
-                contentToStore[Object.keys(data)[i]] = "allow";
+                contentToStore[Object.keys(data)[i]] = value.toLowerCase();
             }
             return contentToStore;
         })
