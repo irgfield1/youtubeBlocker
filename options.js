@@ -3,14 +3,15 @@
 let pattern = /(http(s)??\:\/\/)?(www\.)?((youtube\.com\/watch\?v=)|(youtu.be\/))([a-zA-Z0-9\-_])+/;
 let radioStatus;
 
-
+///////////////////////////////////////////////
+/**************HTML FUNCTIONS*****************/
 /**
  * displays url : blocking pairs in options menu
  */
 function fillHtml() {
-    console.log("options.js - fill html");
     browser.storage.local.get(null)
         .then((data) => {
+            console.log(data);
             if (typeof data != "undefined") {
                 let myList = document.getElementById('history');
                 clearHtmlList(myList);
@@ -24,11 +25,21 @@ function fillHtml() {
                     li.appendChild(document.createTextNode(myUrl));
                     myList.appendChild(li);
                 }
+            } else {
+                let myList = document.getElementById('history');
+                var li = document.createElement('li');
+                li.appendChild(document.createTextNode("Storage is empty"));
+                myList.appendChild(li);
             }
 
         })
         .catch(err => console.error(err));
 
+
+
+}
+
+function radioInit() {
     readLocalStorage("radio")
         .then(data => {
             let value = data.toLowerCase();
@@ -42,7 +53,6 @@ function fillHtml() {
             let myRadio = document.getElementById("split");
             myRadio.checked = true;
         })
-
 }
 
 //creates checkbox for each map entry, checkboxes toggle block status
@@ -114,10 +124,18 @@ function toggleChecksDisplay() {
 }
 
 function updateHtml() {
+    let status = document.getElementById("history").classList.contains("hidden");
+    console.log(status);
+
     fillHtml()
     fillHtmlChecks();
 
-    let status = document.getElementById("history").classList.contains("hidden");
+    if (status) {
+        document.getElementById("history").classList.add("hidden");
+    } else {
+        document.getElementById("checks").classList.add("hidden");
+    }
+
 }
 
 function clearHtmlList(list) {
@@ -126,6 +144,8 @@ function clearHtmlList(list) {
     }
 }
 
+////////////////////////////////////////////
+/***************Utility Functions**********/
 //block button handler for text field
 function writeBlockToBrowser(tab) {
     console.log(tab);
@@ -142,6 +162,8 @@ function writeBlockToBrowser(tab) {
     }
 }
 
+//////////////////////////////////////////////
+/*******************Handlers*****************/
 //switches status in storage.local
 async function radioButtonHandler(e) {
     e.preventDefault();
@@ -150,19 +172,19 @@ async function radioButtonHandler(e) {
         "radio": val
     };
     if (val === "Whitelist") {
-        blockmodeInit("Allow");
+        await blockmodeInit("Allow");
     } else if (val === "Blacklist") {
-        blockmodeInit("Block");
+        await blockmodeInit("Block");
     }
     updateHtml();
-    await browser.storage.local.set(contentToStore);
+    browser.storage.local.set(contentToStore);
 
 }
 
-function blockmodeInit(value) {
+async function blockmodeInit(value) {
     document.getElementById("postBtn").textContent = value;
 
-    browser.storage.local.get(null)
+    await browser.storage.local.get(null)
         .then(data => {
             let contentToStore = {};
             for (let i = 0; i < Object.keys(data).length; i++) {
@@ -176,6 +198,23 @@ function blockmodeInit(value) {
         .then(data => {
             browser.storage.local.set(data);
         });
+}
+////////////////////////////////////////////
+/***************Utility Functions**********/
+//block button handler for text field
+function writeBlockToBrowser(tab) {
+    console.log(tab);
+    console.log(pattern.test(tab));
+    if (pattern.test(tab)) {
+        console.log(tab + " new youtube url");
+        let contentToStore = {};
+        contentToStore[tab] = document.getElementById("postBtn").textContent.toLowerCase();
+        browser.storage.local.set(contentToStore);
+        fillHtml();
+        fillHtmlChecks();
+    } else {
+        console.log(tab + " not youtube");
+    }
 }
 
 const readLocalStorage = async (key) => {
@@ -207,7 +246,6 @@ const readLocalStorage = async (key) => {
     blockButton.addEventListener("click", () => {
         if (youtubeUrl) {
             writeBlockToBrowser(youtubeUrl);
-
         }
     });
     blockWebInputField.addEventListener("change", (e) => {
@@ -217,15 +255,21 @@ const readLocalStorage = async (key) => {
     checkDisplayButton.addEventListener("click", toggleChecksDisplay);
     clearStorageButton.addEventListener("click", () => {
         browser.storage.local.clear();
+        // let radio = await readLocalStorage("radio");
+        // await browser.storage.local.clear();
+        // let contentToStore = { "radio": radio };
+        // browser.storage.local.set(contentToStore);
+        // updateHtml();
     })
 
-    addResourceButton.addEventListener("click", () => {
+    addResourceButton.addEventListener("click", async () => {
         console.log(resourceUrl);
         if (typeof resourceUrl == "undefined" || resourceUrl.length < 1) {
-            interpret();
+            await interpret();
         } else {
-            interpret(resourceUrl);
+            await interpret(resourceUrl);
         }
+        updateHtml();
     })
     blockWebInputField.addEventListener("change", (e) => {
         resourceUrl = e.target.value;
@@ -233,6 +277,7 @@ const readLocalStorage = async (key) => {
 
     radios.addEventListener("change", radioButtonHandler);
     fillHtml();
+    radioInit();
 })();
 
 //Test block/allow button
