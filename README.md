@@ -12,24 +12,26 @@ The radio buttons determine the behavior of the extension:
 Whitelist and blacklist don't add urls to storage in real time, split does\
 All modes allow individual block toggling
 
-This extension works on firefox
+This extension works on Firefox
 
 ## Known Bugs
 * Console thinks every reject({ type: "direct" }) piece is a real error and not just cause I haven't looked to see if I could change it
-* postBtn doesn't switch between allow and block persistently
 * Doesn't work on Chrome
-* regex.match not working, using regex.test but not sure why
-* No CSS in options.css
 * No youtube api thus block channel functionality...
 
-## New features
-Have URL and video name - background function that has webpage access
-complex query selector\
-[X] Toggle checkboxes - css hide and show\
-Remove URL\
-Button to save url to clipboard\
-Blocked by overlay on youtube video\
+## Confusion
+* regex.match not working, using regex.test but not sure why
+* No CSS in options.css
 
+## New features
+- [x] Toggle checkboxes - css hide and show
+- [x] Remove URL Button
+- [x] Button to save url to clipboard
+
+- Have URL and video name - background function that has webpage access
+complex query selector
+- Notify blocked by overlay on youtube video
+- Move remove url and copy to a right click menu
 
 ## Contact
 Isaac Garfield\

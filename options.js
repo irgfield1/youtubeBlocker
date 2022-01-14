@@ -70,6 +70,7 @@ function fillHtmlChecks() {
                     const html =
                         `<input type="checkbox" id="youtubeURL${i}" class="checks" ${Object.values(data)[i] == "allow" ? "checked" : ""} name="url${i}" value="${Object.keys(data)[i]}">
                          <label for="youtubeURL${i}" id="checkboxLabel${i}"> ${Object.keys(data)[i]} : ${Object.values(data)[i]}</label>
+                         <button id="copyBtn${i}" type="button" class="btn btn-outline-info">Copy</button>
                          <button id="clearBtn${i}" type="button" class="btn btn-outline-danger" align="right">Delete</button><br>`;
                     myList.innerHTML += html;
 
@@ -97,6 +98,12 @@ function fillHtmlChecks() {
                         console.log(checkboxBOI.value);
                         await browser.storage.local.remove(checkboxBOI.value);
                         fillHtmlChecks();
+                    })
+                    document.getElementById(`copyBtn${i}`).addEventListener("click", async () => {
+                        console.log(`COPY${i}`);
+                        let checkboxBOI = document.getElementById(`youtubeURL${i}`);
+                        console.log(checkboxBOI.value);
+                        navigator.clipboard.writeText(checkboxBOI.value);
                     })
                 }
 
@@ -280,4 +287,5 @@ const readLocalStorage = async (key) => {
     radioInit();
 })();
 
-//Test block/allow button
+//https://www.geeksforgeeks.org/how-to-add-a-custom-right-click-menu-to-a-webpage/ - Remove and copy?
+//
