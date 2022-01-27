@@ -6,7 +6,9 @@ let radioStatus;
 /*******************FUNCTIONS********************/
 //map entry creation for url, defaults to allow on pageload
 function write2Browser() {
-
+    if(typeof radioStatus == "undefined"){
+        radioChangeListener();
+    }
     if (radioStatus == "blacklist" || radioStatus == "whitelist") {
         return;
     }
@@ -24,7 +26,7 @@ function write2Browser() {
                 // console.log(tempUrl + " new youtube url");
 
                 let contentToStore = {};
-                contentToStore[tempUrfl] = "allow";
+                contentToStore[tempUrl] = "allow";
                 browser.storage.local.set(contentToStore);
 
             } else {
@@ -37,7 +39,7 @@ function write2Browser() {
 
 const readLocalStorage = async (key) => {
     return new Promise((resolve, reject) => {
-        browser.storage.local.get(key, function (result) {
+        browser.storage.local.get(key).then( function (result) {
             if (result[key] === undefined) {
                 reject();
             } else {
@@ -47,15 +49,15 @@ const readLocalStorage = async (key) => {
     });
 };
 
-function radioChangeListener(changes, area) {
+function radioChangeListener(changes = {}) {
     if (changes.hasOwnProperty("radio")) {
         radioStatus = changes.radio.newValue.toLowerCase();
     } else {
         radioStatus = "dynamic";
     }
 
-    console.log(radioStatus);
-    console.log(area);
+    // console.log(radioStatus);
+    // console.log(area);
 }
 
 function handleProxyRequest3(requestInfo) {
@@ -94,6 +96,10 @@ function handleProxyRequest3(requestInfo) {
 }
 
 function chromeProxyHandle() {
+    //check url using tabs,
+//apply rule
+//detect changes in url
+//add or remove rule...
     if (!requestInfo.url.includes("googlevideo")) {
         console.log("Not block worthy");
         resolve({ type: "direct" });
@@ -125,16 +131,73 @@ function chromeProxyHandle() {
     });
 }
 
+async function blockCheck(){
+    //check url using tabs,
+//apply rule
+//detect changes in url
+//add or remove rule...
+    let tab = await getCurrentTab();
+    if(typeof tab == "undefined" || typeof tab.url == "undefined"){
+        return;
+    }
+    console.log(tab);
+    if(youtubeVideoPattern.test(tab.url)){
+        await readLocalStorage(tab.url)
+        .then((data) => {
+            console.log(data);//block/allow
+            //base rule
+            if(data == "block"){
+                let rule = {
+                    "id" : 1,
+                    "priority": 1,
+                    "action" : { "type" : "block" },
+                    "condition" : {
+                      "urlFilter" : "googlevideo",
+                      "domains" : ["youtube.com"]
+                    }
+                }
+
+                chrome.declarativeNetRequest.updateDynamicRules(
+                    {
+                        addRules:[rule],
+                        removeRuleIds:[1]
+                    }
+                    
+                )
+                console.log(rule);
+            } else if (data == "allow") {
+                chrome.declarativeNetRequest.updateDynamicRules(
+                    {
+                        removeRuleIds:[1]
+                    }
+                )
+
+            }
+
+            chrome.declarativeNetRequest.getDynamicRules().then(data => console.log(data));
+        })
+        .catch(err => {
+            console.log(err);
+        })
+
+    }
+}
+
+async function getCurrentTab() {
+    let queryOptions = { active: true, currentWindow: true };
+    let [tab] = await chrome.tabs.query(queryOptions);
+    return tab;
+  }
+
 /**************LISTENERS************************/
 
-//document.addEventListener("DOMContentLoaded", listHistory);
 browser.tabs.onActivated.addListener(async () => {
-    // console.log("onActivated");
     write2Browser();
+    blockCheck();
 });
 browser.tabs.onUpdated.addListener(() => {
-    // console.log("onUpdated");
     write2Browser();
+    blockCheck();
 });
 
 browser.storage.onChanged.addListener(radioChangeListener)
@@ -155,10 +218,10 @@ if (navigator.userAgent.indexOf("Chrome") != -1) {
         mode: "pac_script",
         pacScript: { url: "proxy.pac" }
     };
-    chrome.proxy.settings.set(
-        { value: config, scope: 'regular' },
-        function () { }
-    );
+    // chrome.proxy.settings.set(
+    //     { value: config, scope: 'regular' },
+    //     function () { }
+    // );
     // chrome.proxy.onRequest.addListener(handleProxyRequest3, { urls: ["<all_urls>"] });
 } else {
     console.log("firey foxy ditected");
@@ -175,3 +238,9 @@ if (navigator.userAgent.indexOf("Chrome") != -1) {
 //if statement?
 //Lol he says working with an extension is painful
 //Allow you to work on it without the browser extension
+
+
+//check url using tabs,
+//apply rule
+//detect changes in url
+//add or remove rule...

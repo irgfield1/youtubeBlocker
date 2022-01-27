@@ -5,16 +5,15 @@
     "version": "0.1.0",
     "homepage_url": "https://github.com/irgfield1",
     "permissions": [
+        "activeTab",
+        "scripting",
         "storage",
         "tabs",
         "alarms",
-        "proxy"
+        "declarativeNetRequest"
     ],
     "background": {
-        "serviceWork": [
-            "node_modules/webextension-polyfill/dist/browser-polyfill.js",
-            "background.js"
-        ]
+        "service_worker": "worker.js"
     },
     "action": {
         "browser_style": true,
