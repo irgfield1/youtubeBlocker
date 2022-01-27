@@ -88,6 +88,46 @@ function handleProxyRequest3(requestInfo) {
     });
 }
 
+function chromeBlocking(requestInfo) {//technically we can use promises, I just don't know how
+    chrome.tabs.query({ active: true }).then(
+        async tabs => {
+            let tempUrl = tabs[0].url.slice();
+            console.log(tempUrl);
+        }
+    )
+    return ({ protect: "the child" })
+    // console.log(requestInfo);
+    // if (!requestInfo.url.includes("googlevideo")) {
+    //     console.log("Not block worthy");
+    //     return ({ type: "direct" });
+    // }
+    // browser.tabs.query({ active: true }).then(async (tabs) => {
+    //     let tempUrl = tabs[0].url.slice();
+    //     await readLocalStorage(tempUrl)
+    //         .then(data => {//found in storage
+    //             if (data == "allow") {
+    //                 console.log("pass");
+    //                 return ({ type: "direct" });
+    //             } else if (data == "block") {
+    //                 console.log("proxy");
+    //                 return ({ type: "http", host: "127.0.0.1", port: 65535 });
+    //             }
+    //         }, async data => {//not found in storage
+    //             if (typeof radioStatus == "undefined") {
+    //                 radioStatus = (await readLocalStorage("radio")).toLowerCase();
+    //             }
+    //             console.log("not found in storage");
+    //             if (radioStatus == "blacklist") {
+    //                 console.log("pass");
+    //                 return ({ type: "direct" })
+    //             } else if (radioStatus == "whitelist") {
+    //                 console.log("proxy");
+    //                 return ({ type: "http", host: "127.0.0.1", port: 65535 })
+    //             }
+    //         });
+    // });
+}
+
 /**************LISTENERS************************/
 
 //document.addEventListener("DOMContentLoaded", listHistory);
@@ -102,10 +142,59 @@ browser.tabs.onUpdated.addListener(() => {
 
 browser.storage.onChanged.addListener(radioChangeListener)
 
-// Log any errors from the proxy script
-browser.proxy.onError.addListener(error => {
-    console.error(`Proxy error: ${error.message}`);
-});
+/*/ // Log any errors from the proxy script
+// chrome.proxy.onError.addListener(error => {
+//     console.error(`Proxy error: ${error}`);
+// });
 
-// Listen for a request to open a webpage// calls on every https req
-browser.proxy.onRequest.addListener(handleProxyRequest3, { urls: ["<all_urls>"] });
+// // Listen for a request to open a webpage// calls on every https req
+// chrome.proxy.onRequest.addListener(handleProxyRequest3, { urls: ["<all_urls>"] });
+*/
+
+if (navigator.userAgent.indexOf("Chrome") != -1) {
+    //chromeProxyHandle();
+    chrome.webRequest.onBeforeRequest.addListener(
+        (info) => {
+            let result = chromeBlocking(info);
+            console.log(result);
+            console.log(info?.url);
+            if (!info?.url.includes("googlevideo")) {
+                console.log("Not block worthy");
+                return;
+            } else {
+                console.log("block the dude");
+                return ({ cancel: true });
+            }
+        },
+        { urls: ["<all_urls>"] },
+        ["blocking"]
+    )
+
+    console.log("Using Chrome");
+    var config = {
+        mode: "pac_script",
+        pacScript: { url: "proxy.pac" }
+    };
+    chrome.proxy.settings.set(
+        { value: config, scope: 'regular' },
+        function () { }
+    );
+    // chrome.proxy.onRequest.addListener(handleProxyRequest3, { urls: ["<all_urls>"] });
+} else {
+    console.log("firey foxy ditected");
+    // Log any errors from the proxy script
+    browser.proxy.onError.addListener(error => {
+        console.error(`Proxy error: ${error}`);
+    });
+
+    // Listen for a request to open a webpage// calls on every https req
+    browser.proxy.onRequest.addListener(handleProxyRequest3, { urls: ["<all_urls>"] });
+
+}
+//cross platform
+//Lol he says working with an extension is painful
+//Allow you to work on it without the browser extension
+
+//Name
+//Folder based blocking
+

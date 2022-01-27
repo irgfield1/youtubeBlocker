@@ -253,8 +253,8 @@ const readLocalStorage = async (key) => {
     blockButton.addEventListener("click", () => {
         if (youtubeUrl) {
             writeBlockToBrowser(youtubeUrl);
-        }
-    });
+
+    }});
     blockWebInputField.addEventListener("change", (e) => {
         youtubeUrl = e.target.value;
     });

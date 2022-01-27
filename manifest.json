@@ -5,6 +5,8 @@
     "version": "0.2.0",
     "homepage_url": "https://github.com/irgfield1",
     "permissions": [
+        "webRequest",
+        "webRequestBlocking",
         "storage",
         "tabs",
         "alarms",
