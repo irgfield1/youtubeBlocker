@@ -59,7 +59,7 @@ function handleProxyRequest3(requestInfo) {
   return new Promise((resolve, reject) => {
     if (!requestInfo.url.includes("googlevideo")) {
       console.log("Not block worthy");
-      reject({ type: "direct" });
+      resolve({ type: "direct" });
     }
     browser.tabs.query({ active: true }).then(async (tabs) => {
       let tempUrl = tabs[0].url.slice();
@@ -68,7 +68,7 @@ function handleProxyRequest3(requestInfo) {
           //found in storage
           if (data == "allow") {
             console.log("pass");
-            reject({ type: "direct" });
+            resolve({ type: "direct" });
           } else if (data == "block") {
             console.log("proxy");
             resolve({ type: "http", host: "127.0.0.1", port: 65535 });
@@ -82,7 +82,7 @@ function handleProxyRequest3(requestInfo) {
           console.log("not found in storage");
           if (radioStatus == "blacklist") {
             console.log("pass");
-            reject({ type: "direct" });
+            resolve({ type: "direct" });
           } else if (radioStatus == "whitelist") {
             console.log("proxy");
             resolve({ type: "http", host: "127.0.0.1", port: 65535 });

@@ -243,9 +243,10 @@ const readLocalStorage = async (key) => {
   let youtubeUrl = "";
   let resourceUrl = "";
   const blockButton = document.getElementById("postBtn");
-  const blockWebInputField = document.getElementById("blockWeb");
+  const blockUrlInputField = document.getElementById("blockUrl");
   const checkToggleButton = document.getElementById("checksButton");
   const clearStorageButton = document.getElementById("strClearBtn");
+  const resourceFetchInputField = document.getElementById("resourceFetch");
   const addResourceButton = document.getElementById("strLoadBtn");
   const radios = document.getElementById("proxy_style_form");
 
@@ -254,7 +255,7 @@ const readLocalStorage = async (key) => {
       writeBlockToBrowser(youtubeUrl);
     }
   });
-  blockWebInputField.addEventListener("change", (e) => {
+  blockUrlInputField.addEventListener("change", (e) => {
     youtubeUrl = e.target.value;
   });
 
@@ -273,7 +274,7 @@ const readLocalStorage = async (key) => {
     }
     updateHtml();
   });
-  blockWebInputField.addEventListener("change", (e) => {
+  resourceFetchInputField.addEventListener("change", (e) => {
     resourceUrl = e.target.value;
   });
 

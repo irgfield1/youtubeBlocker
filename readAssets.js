@@ -34,18 +34,24 @@ function arrayify(myString) {
   return contentToStore;
 }
 
-async function fetchStorage(textAsset = "assets/blockfolder/data.txt") {
-  // let textAsset = "assets/blockfolder/data.txt";
+async function fetchStorage(textAsset) {
   console.log(textAsset);
   let contentToStore = {};
 
-  await fetch(textAsset).then(async (data) => {
-    let dataReader = data.body.getReader();
-    let codedText = await dataReader.read();
-    const utf8Decoder = new TextDecoder("utf-8");
-    let plainText = utf8Decoder.decode(codedText?.value);
-    contentToStore = JSON.parse(plainText);
-  });
+  await fetch(textAsset).then(
+    async (data) => {
+      console.log(data);
+      let dataReader = data.body.getReader();
+      let codedText = await dataReader.read();
+      const utf8Decoder = new TextDecoder("utf-8");
+      let plainText = utf8Decoder.decode(codedText?.value);
+      contentToStore = JSON.parse(plainText);
+      console.log("FINISH");
+    },
+    (err) => {
+      console.error(err);
+    }
+  );
 
   let storage = await browser.storage.local.get();
   console.log(storage);
