@@ -1,5 +1,4 @@
 //const { contextualIdentities } = require("webextension-polyfill");
-
 let youtubeVideoPattern =
   /(http(s)??\:\/\/)?(www\.)?((youtube\.com\/watch\?v=)|(youtu.be\/))([a-zA-Z0-9\-_])+/;
 let radioStatus;
@@ -38,6 +37,7 @@ function write2Browser() {
   });
 }
 
+// Key helper function
 const readLocalStorage = async (key) => {
   return new Promise((resolve, reject) => {
     browser.storage.local.get(key).then(function (result) {
@@ -50,23 +50,22 @@ const readLocalStorage = async (key) => {
   });
 };
 
+// Updates radioStatus within this file
 function radioChangeListener(changes = {}) {
   if (changes.hasOwnProperty("radio")) {
     radioStatus = changes.radio.newValue.toLowerCase();
   } else {
     radioStatus = "dynamic";
   }
-
-  // console.log(radioStatus);
-  // console.log(area);
 }
 
+// Handling for firefox
 function handleProxyRequest3(requestInfo) {
   console.log(requestInfo);
   return new Promise((resolve, reject) => {
     if (!requestInfo.url.includes("googlevideo")) {
       console.log("Not block worthy");
-      resolve({ type: "direct" });
+      reject({ type: "direct" });
     }
     browser.tabs.query({ active: true }).then(async (tabs) => {
       let tempUrl = tabs[0].url.slice();
@@ -75,7 +74,7 @@ function handleProxyRequest3(requestInfo) {
           //found in storage
           if (data == "allow") {
             console.log("pass");
-            resolve({ type: "direct" });
+            reject({ type: "direct" });
           } else if (data == "block") {
             console.log("proxy");
             resolve({ type: "http", host: "127.0.0.1", port: 65535 });
@@ -235,10 +234,6 @@ if (navigator.userAgent.indexOf("Chrome") != -1) {
     mode: "pac_script",
     pacScript: { url: "proxy.pac" },
   };
-  // chrome.proxy.settings.set(
-  //     { value: config, scope: 'regular' },
-  //     function () { }
-  // );
   // chrome.proxy.onRequest.addListener(handleProxyRequest3, { urls: ["<all_urls>"] });
 } else {
   console.log("firey foxy ditected");
@@ -261,3 +256,8 @@ if (navigator.userAgent.indexOf("Chrome") != -1) {
 //apply rule
 //detect changes in url
 //add or remove rule...
+//Lol he says working with an extension is painful
+//Allow you to work on it without the browser extension
+
+//Name
+//Folder based blocking

@@ -1,6 +1,6 @@
-# Youtube Tracker Extension
+# boring-youtube-blocker
 ## Purpose
-Youtube Tracker/Blocker is intended to effectively block specific youtube videos, or allow only specific videos\
+Allow only YouTube videos you want, block the rest. So boring!\
 \
 Youtube blocker uses the current url to know when to block any requests to google's video host\
 
@@ -12,18 +12,29 @@ The radio buttons determine the behavior of the extension:
 Whitelist and blacklist don't add urls to storage in real time, split does\
 All modes allow individual block toggling
 
-This extension works on firefox
+This extension works on Firefox
 
 ## User guide
 Just step by step
 
 ## Known Bugs
 * Console thinks every reject({ type: "direct" }) piece is a real error and not just cause I haven't looked to see if I could change it
-* postBtn doesn't switch between allow and block persistently
 * Doesn't work on Chrome
+* No youtube api thus block channel functionality...
+
+## Confusion
 * regex.match not working, using regex.test but not sure why
 * No CSS in options.css
-* No youtube api thus block channel functionality...
+
+## New features
+- [x] Toggle checkboxes - css hide and show
+- [x] Remove URL Button
+- [x] Button to save url to clipboard
+
+- Have URL and video name - background function that has webpage access
+complex query selector
+- Notify blocked by overlay on youtube video
+- Move remove url and copy to a right click menu
 
 ## New features
 Have URL and video name - background function that has webpage access

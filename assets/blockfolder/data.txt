@@ -1,0 +1,9 @@
+{
+    "block": ["https://www.youtube.com/watch?v=EozeSDeV3Vo",
+        "https://www.youtube.com/watch?v=qfj5IiaR_0w",
+        "https://www.youtube.com/watch?v=m_a0fN48Alw" ],
+
+    "allow": ["https://www.youtube.com/watch?v=_BLIJ8I3EwQ",
+        "https://www.youtube.com/watch?v=lujvlukHAqU",
+        "https://www.youtube.com/watch?v=OkCX8d8WSOg"]
+}
