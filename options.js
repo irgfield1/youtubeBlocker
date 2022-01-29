@@ -39,6 +39,7 @@ function fillHtml() {
 function radioInit() {
   readLocalStorage("radio")
     .then((data) => {
+      console.log(data);
       let value = data.toLowerCase();
       let myRadio = document.getElementById(value);
       myRadio.checked = "true";
@@ -46,7 +47,9 @@ function radioInit() {
         document.getElementById("postBtn").textContent = "Allow";
       }
     })
-    .catch(() => {
+    .catch((err) => {
+      console.log(err);
+      browser.storage.local.get().then((data) => console.log(data));
       let myRadio = document.getElementById("split");
       myRadio.checked = true;
     });
@@ -57,7 +60,7 @@ function radioInit() {
  */
 function fillHtmlChecks() {
   browser.storage.local
-    .get(null)
+    .get()
     .then((data) => {
       if (typeof data != "undefined") {
         let myList = document.querySelector(".blockable_url_list");
@@ -67,14 +70,14 @@ function fillHtmlChecks() {
           if (Object.keys(data)[i] == "radio") {
             continue;
           }
-          const html = `<input type="checkbox" id="youtubeURL${i}" class="checks" ${
+          const html = `<div white-space:"nowrap" overflow:"auto"><input type="checkbox" id="youtubeURL${i}" class="checks" ${
             Object.values(data)[i] == "allow" ? "checked" : ""
           } name="url${i}" value="${Object.keys(data)[i]}">
                          <label for="youtubeURL${i}" id="checkboxLabel${i}"> ${
             Object.keys(data)[i]
           } : ${Object.values(data)[i]}</label>
                          <button id="copyBtn${i}" type="button" class="btn btn-outline-info">Copy</button>
-                         <button id="clearBtn${i}" type="button" class="btn btn-outline-danger" align="right">Delete</button><br>`;
+                         <button id="clearBtn${i}" type="button" class="btn btn-outline-danger" align="right">Delete</button><br></div>`;
 
           myList.innerHTML += html;
         }
@@ -245,7 +248,7 @@ function writeBlockToBrowser(tab) {
 
 const readLocalStorage = async (key) => {
   return new Promise((resolve, reject) => {
-    browser.storage.local.get(key, function (result) {
+    browser.storage.local.get(key).then(function (result) {
       if (result[key] === undefined) {
         reject();
       } else {

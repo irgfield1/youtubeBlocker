@@ -39,6 +39,7 @@ function write2Browser() {
 
 // Key helper function
 const readLocalStorage = async (key) => {
+  console.log(key);
   return new Promise((resolve, reject) => {
     browser.storage.local.get(key).then(function (result) {
       if (result[key] === undefined) {
@@ -200,6 +201,7 @@ function setBrowserRules(blockStatus) {
 }
 
 async function getCurrentTab() {
+  chrome.storage.local.get(null).then((data) => console.log(data));
   let queryOptions = { active: true, currentWindow: true };
   let [tab] = await chrome.tabs.query(queryOptions);
   return tab;
