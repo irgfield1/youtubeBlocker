@@ -1,19 +1,25 @@
-.select_text{
-    user-select: text; /* supported by Chrome and Opera */
-     /* -webkit-user-select: auto; /* Safari 
+.select_text {
+  user-select: text; /* supported by Chrome and Opera */
+  /* -webkit-user-select: auto; /* Safari 
      -khtml-user-select: auto; /* Konqueror HTML *
      -moz-user-select: auto; /* Firefox *
      -ms-user-select: auto; Internet Explorer/Edge */
-  }
+}
 
-  .resized_textbox {width: 350px; height: 20px}
+.resized_textbox {
+  width: 350px;
+  height: 20px;
+}
 
-  .hidden {
-    visibility: hidden;
-    opacity: 0;
-    height: 0px;
-  }
+.hidden {
+  visibility: hidden;
+  opacity: 0;
+  height: 0px;
+}
 
-  body{
-      margin: 10px;
-  }
+body {
+  margin: 10px;
+  min-width: 200px;
+  zoom: 90%;
+}
+/*Trying to change chrome ux*/
