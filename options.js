@@ -39,7 +39,6 @@ function fillHtml() {
 function radioInit() {
   readLocalStorage("radio")
     .then((data) => {
-      console.log(data);
       let value = data.toLowerCase();
       let myRadio = document.getElementById(value);
       myRadio.checked = "true";
@@ -47,20 +46,16 @@ function radioInit() {
         document.getElementById("postBtn").textContent = "Allow";
       }
     })
-    .catch((err) => {
-      console.log(err);
-      browser.storage.local.get().then((data) => console.log(data));
+    .catch(() => {
       let myRadio = document.getElementById("split");
       myRadio.checked = true;
     });
 }
 
-/**
- * creates checkbox for each map entry, checkboxes toggle block status
- */
+//creates checkbox for each map entry, checkboxes toggle block status
 function fillHtmlChecks() {
   browser.storage.local
-    .get()
+    .get(null)
     .then((data) => {
       if (typeof data != "undefined") {
         let myList = document.querySelector(".blockable_url_list");
@@ -70,29 +65,42 @@ function fillHtmlChecks() {
           if (Object.keys(data)[i] == "radio") {
             continue;
           }
-          const html = `<div white-space:"nowrap" overflow:"auto"><input type="checkbox" id="youtubeURL${i}" class="checks" ${
-            Object.values(data)[i] == "allow" ? "checked" : ""
-          } name="url${i}" value="${Object.keys(data)[i]}">
-                         <label for="youtubeURL${i}" id="checkboxLabel${i}"> ${
-            Object.keys(data)[i]
-          } : ${Object.values(data)[i]}</label>
-                         <button id="copyBtn${i}" type="button" class="btn btn-outline-info">Copy</button>
-                         <button id="clearBtn${i}" type="button" class="btn btn-outline-danger" align="right">Delete</button><br></div>`;
+            const html = `<div class="form-row col-auto"><input type="checkbox" id="youtubeURL${i}" class="checks" ${
+              Object.values(data)[i] == "allow" ? "checked" : ""
+            } name="url${i}" value="${Object.keys(data)[i]}">
+                           <label for="youtubeURL${i}" id="checkboxLabel${i}"> ${
+              Object.keys(data)[i]
+            } : ${Object.values(data)[i]}</label>
+                           <button id="copyBtn${i}" type="button" class="btn btn-outline-info">Copy</button>
+                           <button id="clearBtn${i}" type="button" class="btn btn-outline-danger" align="right">Delete</button><div><br>`;
 
+        //   const html = `<div class="input-group mb-3">
+        //                  <div class="input-group-prepend">
+        //                    <div class="input-group-text">
+        //                      <input type="checkbox" id="youtubeURL${i}" class="checks" ${Object.values(data)[i] == "allow" ? "checked" : ""} name="url${i}" 
+        //                         value="${Object.keys(data)[i]}" aria-label="Checkbox for following text input">
+        //                    </div>
+        //                  </div>
+        //                     <label for="youtubeURL${i}" id="checkboxLabel${i}">${Object.keys(data)[i]} : ${Object.values(data)[i]}</label>
+        //                  <div class="input-group-append">
+        //                     <div class="input-group-text">
+        //                         <button class="btn btn-outline-info" type="button" id="copyBtn${i}>Copy</button>
+        //                         <button class="btn btn-outline-danger" type="button" id="clearBtn${i}>Delete</button>
+        //                     </div>
+        //                 </div>
+        //                </div>`;
+        //                console.log(html);
           myList.innerHTML += html;
         }
         let checklist = document.querySelectorAll(".checks");
-
+        console.log("HTML");
         // Event listener for checkbox toggle
         for (let i = 0; i < checklist.length; i++) {
           checklist[i].addEventListener("input", async () => {
             let myList = document.querySelector(".blockable_url_list");
             let contentToStore = {};
 
-            let urlBlockStatus = document.querySelector(`#youtubeURL${i}`)
-              .checked
-              ? "allow"
-              : "block";
+            let urlBlockStatus = document.querySelector(`#youtubeURL${i}`).checked ? "allow" : "block";
             contentToStore[Object.keys(data)[i]] = urlBlockStatus;
 
             browser.storage.local.set(contentToStore);
@@ -101,7 +109,7 @@ function fillHtmlChecks() {
             } : ${urlBlockStatus}`;
           });
         }
-
+        console.log("Checks");
         //Add delete and click button functionality
         for (let i = 0; i < checklist.length; i++) {
           document
@@ -122,30 +130,13 @@ function fillHtmlChecks() {
               navigator.clipboard.writeText(checkboxBOI.value);
             });
         }
+        console.log("CopyDelete");
       }
     })
     .catch((err) => console.error(err));
 }
 
-/**
- * block button handler for text field
- */
-function writeBlockToBrowser(tab) {
-  console.log(tab);
-  console.log(pattern.test(tab));
-  if (pattern.test(tab)) {
-    console.log(tab + " new youtube url");
-    let contentToStore = {};
-    contentToStore[tab] = document
-      .getElementById("postBtn")
-      .textContent.toLowerCase();
-    browser.storage.local.set(contentToStore);
-    fillHtml();
-  } else {
-    console.log(tab + " not youtube");
-  }
-}
-// Checkboxeas toggle with list
+// Checkboxes toggle with list
 function toggleChecksDisplay() {
   fillHtml();
   fillHtmlChecks();
@@ -248,7 +239,7 @@ function writeBlockToBrowser(tab) {
 
 const readLocalStorage = async (key) => {
   return new Promise((resolve, reject) => {
-    browser.storage.local.get(key).then(function (result) {
+    browser.storage.local.get(key, function (result) {
       if (result[key] === undefined) {
         reject();
       } else {
@@ -266,9 +257,10 @@ const readLocalStorage = async (key) => {
   let youtubeUrl = "";
   let resourceUrl = "";
   const blockButton = document.getElementById("postBtn");
-  const blockWebInputField = document.getElementById("blockWeb");
+  const blockUrlInputField = document.getElementById("blockUrl");
   const checkToggleButton = document.getElementById("checksButton");
   const clearStorageButton = document.getElementById("strClearBtn");
+  const resourceFetchInputField = document.getElementById("resourceFetch");
   const addResourceButton = document.getElementById("strLoadBtn");
   const radios = document.getElementById("proxy_style_form");
 
@@ -277,7 +269,7 @@ const readLocalStorage = async (key) => {
       writeBlockToBrowser(youtubeUrl);
     }
   });
-  blockWebInputField.addEventListener("change", (e) => {
+  blockUrlInputField.addEventListener("change", (e) => {
     youtubeUrl = e.target.value;
   });
 
@@ -296,7 +288,7 @@ const readLocalStorage = async (key) => {
     }
     updateHtml();
   });
-  blockWebInputField.addEventListener("change", (e) => {
+  resourceFetchInputField.addEventListener("change", (e) => {
     resourceUrl = e.target.value;
   });
 
