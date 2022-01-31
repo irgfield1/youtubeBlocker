@@ -55,7 +55,7 @@ function radioChangeListener(changes, area) {
 
 // Handling for firefox
 function handleProxyRequest3(requestInfo) {
-  console.log(requestInfo);
+//  console.log(requestInfo);
   return new Promise((resolve, reject) => {
     if (!requestInfo.url.includes("googlevideo")) {
       console.log("Not block worthy");

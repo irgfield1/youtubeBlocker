@@ -11,7 +11,6 @@ function fillHtml() {
   browser.storage.local
     .get(null)
     .then((data) => {
-      console.log(data);
       if (typeof data != "undefined") {
         let myList = document.getElementById("history");
         clearHtmlList(myList);
@@ -102,18 +101,14 @@ function fillHtmlChecks() {
           document
             .getElementById(`clearBtn${i}`)
             .addEventListener("click", async () => {
-              console.log(`BOI${i}`);
               let checkboxBOI = document.getElementById(`youtubeURL${i}`);
-              console.log(checkboxBOI.value);
               await browser.storage.local.remove(checkboxBOI.value);
               fillHtmlChecks();
             });
           document
             .getElementById(`copyBtn${i}`)
             .addEventListener("click", async () => {
-              console.log(`COPY${i}`);
               let checkboxBOI = document.getElementById(`youtubeURL${i}`);
-              console.log(checkboxBOI.value);
               navigator.clipboard.writeText(checkboxBOI.value);
             });
         }
@@ -156,26 +151,37 @@ function updateHtml() {
   }
 }
 
-function clearHtmlList(list) {
-  while (list.firstChild) {
-    list.removeChild(list.firstChild);
-  }
+function nameFromUrls(){
+    browser.storage.local.get().then((data) => {
+        console.log(data);
+        for(let i = 0; i < Object.keys(data).length; i++){
+            console.log(i + Object.keys(data)[i].slice(-11) + " / " + Object.keys(data).length);
+            apiWrap(Object.keys(data)[i].slice(-11));
+        }
+    })
 }
+
+function apiWrap(string) {
+    return fetch(`https://www.googleapis.com/youtube/v3/videos?part=snippet&id=${string}&key=AIzaSyCCxgNzq2dbazIktxBK4MJhpWRpvP0HTvU`)
+        .then(response => response.json())
+        .then(data => console.log(data?.items[0]?.snippet?.title));
+}
+
 
 //////////////////////////////////////////////
 /*******************Handlers*****************/
 //switches radio button status in storage.local
 async function radioButtonHandler(e) {
-  e.preventDefault();
-  let val = e.target.value;
+    e.preventDefault();
+    let val = e.target.value;
   let contentToStore = {
     radio: val,
-  };
-  if (val === "Whitelist") {
+};
+if (val === "Whitelist") {
     await blockmodeInit("Allow");
   } else if (val === "Blacklist") {
     await blockmodeInit("Block");
-  } else if (val == "Split") {
+} else if (val == "Split") {
     document.getElementById("postBtn").textContent = "Block";
   }
   updateHtml();
@@ -184,22 +190,22 @@ async function radioButtonHandler(e) {
 
 // Changes blockmode between dynamic, whitelist and blacklist
 async function blockmodeInit(value) {
-  document.getElementById("postBtn").textContent = value;
-
-  await browser.storage.local
+    document.getElementById("postBtn").textContent = value;
+    
+    await browser.storage.local
     .get(null)
     .then((data) => {
-      let contentToStore = {};
-      for (let i = 0; i < Object.keys(data).length; i++) {
-        if (Object.keys(data)[i] == "radio") {
-          continue;
+        let contentToStore = {};
+        for (let i = 0; i < Object.keys(data).length; i++) {
+            if (Object.keys(data)[i] == "radio") {
+                continue;
+            }
+            contentToStore[Object.keys(data)[i]] = value.toLowerCase();
         }
-        contentToStore[Object.keys(data)[i]] = value.toLowerCase();
-      }
-      return contentToStore;
+        return contentToStore;
     })
     .then((data) => {
-      browser.storage.local.set(data);
+        browser.storage.local.set(data);
     });
 }
 
@@ -207,37 +213,39 @@ async function blockmodeInit(value) {
 /***************Utility Functions**********/
 //block button handler for first textbox
 function writeBlockToBrowser(tab) {
-  console.log(tab);
-  console.log(pattern.test(tab));
-  if (pattern.test(tab)) {
-    console.log(tab + " new youtube url");
+    if (pattern.test(tab)) {
     let contentToStore = {};
     contentToStore[tab] = document
-      .getElementById("postBtn")
-      .textContent.toLowerCase();
+    .getElementById("postBtn")
+    .textContent.toLowerCase();
     browser.storage.local.set(contentToStore);
     fillHtml();
     fillHtmlChecks();
-  } else {
+} else {
     console.log(tab + " not youtube");
-  }
+}
 }
 
 const readLocalStorage = async (key) => {
-  return new Promise((resolve, reject) => {
-    browser.storage.local.get(key, function (result) {
-      if (result[key] === undefined) {
-        reject();
-      } else {
-        resolve(result[key]);
-      }
+    return new Promise((resolve, reject) => {
+        browser.storage.local.get(key, function (result) {
+            if (result[key] === undefined) {
+                reject();
+            } else {
+                resolve(result[key]);
+            }
+        });
     });
-  });
 };
 
+function clearHtmlList(list) {
+  while (list.firstChild) {
+    list.removeChild(list.firstChild);
+  }
+}
 //Executable code
 (() => {
-  /**
+    /**
    * Init function that sets browser extension UI event listeners
    */
   let youtubeUrl = "";
@@ -281,6 +289,11 @@ const readLocalStorage = async (key) => {
   radios.addEventListener("change", radioButtonHandler);
   fillHtml();
   radioInit();
+
+  const apiBtn = document.getElementById("youtubeAPIBtn");
+  apiBtn.addEventListener("click", () => {
+      nameFromUrls();
+  })
 })();
 
 //https://www.geeksforgeeks.org/how-to-add-a-custom-right-click-menu-to-a-webpage/ - Remove and copy?
