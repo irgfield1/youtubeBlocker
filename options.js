@@ -93,7 +93,6 @@ function fillHtmlChecks() {
           myList.innerHTML += html;
         }
         let checklist = document.querySelectorAll(".checks");
-        console.log("HTML");
         // Event listener for checkbox toggle
         for (let i = 0; i < checklist.length; i++) {
           checklist[i].addEventListener("input", async () => {
@@ -239,7 +238,7 @@ function writeBlockToBrowser(tab) {
 
 const readLocalStorage = async (key) => {
   return new Promise((resolve, reject) => {
-    browser.storage.local.get(key, function (result) {
+    browser.storage.local.get(key).then(function (result) {
       if (result[key] === undefined) {
         reject();
       } else {

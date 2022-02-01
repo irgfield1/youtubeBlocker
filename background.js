@@ -9,6 +9,7 @@ function write2Browser() {
   if (typeof radioStatus == "undefined") {
     radioChangeListener();
   }
+  console.log(radioStatus);
   if (radioStatus == "blacklist" || radioStatus == "whitelist") {
     return;
   }
@@ -53,11 +54,15 @@ const readLocalStorage = async (key) => {
 
 // Updates radioStatus within this file
 function radioChangeListener(changes = {}) {
+    console.log(changes);
   if (changes.hasOwnProperty("radio")) {
+      console.log("Has radio");
     radioStatus = changes.radio.newValue.toLowerCase();
   } else {
-    radioStatus = "dynamic";
+      console.log("has not radio");
+    radioStatus = "split";
   }
+  console.log(radioStatus);
 }
 
 // Handling for firefox
