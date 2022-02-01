@@ -7,7 +7,7 @@ let radioStatus;
 ///////////////////////////////////////////////
 /**************HTML FUNCTIONS*****************/
 // displays url : blocking pairs in options menu
-function fillHtml() {
+async function fillHtml() {
   browser.storage.local
     .get(null)
     .then((data) => {
@@ -151,20 +151,43 @@ function updateHtml() {
   }
 }
 
-function nameFromUrls(){
-    browser.storage.local.get().then((data) => {
-        console.log(data);
+async function nameFromUrls(){
+    let videoArray = [];
+    let titleArray = [];
+    await browser.storage.local.get().then(async (data) => {
         for(let i = 0; i < Object.keys(data).length; i++){
-            console.log(i + Object.keys(data)[i].slice(-11) + " / " + Object.keys(data).length);
-            apiWrap(Object.keys(data)[i].slice(-11));
+            // console.log(i + " " + Object.keys(data)[i].slice(-11) + " / " + Object.keys(data).length);
+            videoArray.push(Object.keys(data)[i]);
+            titleArray.push(await apiWrap(Object.keys(data)[i].slice(-11)));
         }
     })
+    // console.log(videoArray);
+    // console.log(titleArray);
+    littleHtml(videoArray, titleArray);
+}
+
+function littleHtml(arrayOne, arrayTwo){
+    let base = document.getElementById("endElement");
+    // console.log(arrayOne.length + " " + arrayTwo.length);
+    if(arrayOne.length != arrayTwo.length){
+        console.log("cannot preform operation, arrays of different lengths");
+    }
+    for (let i = 0; i < arrayOne.length; i++){
+        // console.log(`${i}`);
+        let html = `<p id="tuple${i}">${arrayOne[i].slice(-31)} : ${arrayTwo[i]}</p>`;
+        // console.log(html);
+        base.innerHTML += html;
+    }
+
 }
 
 function apiWrap(string) {
     return fetch(`https://www.googleapis.com/youtube/v3/videos?part=snippet&id=${string}&key=AIzaSyCCxgNzq2dbazIktxBK4MJhpWRpvP0HTvU`)
         .then(response => response.json())
-        .then(data => console.log(data?.items[0]?.snippet?.title));
+        .then(data => {
+            // console.log(data?.items[0]?.snippet?.title);
+            return data?.items[0]?.snippet?.title;
+        });
 }
 
 
@@ -297,3 +320,7 @@ function clearHtmlList(list) {
 })();
 
 //https://www.geeksforgeeks.org/how-to-add-a-custom-right-click-menu-to-a-webpage/ - Remove and copy?
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////////
+// It would be nice to default to titles in fillHtml. I don't know if that's possible o sea, realistic //
+/////////////////////////////////////////////////////////////////////////////////////////////////////////
