@@ -85,9 +85,7 @@ function fillHtmlChecks() {
                         console.log(data);
 
                         let urlBlockStatus = document.querySelector(`#youtubeURL${i}`)
-                            .checked
-                            ? "allow"
-                            : "block";
+                            .checked ? "allow" : "block";
                         contentToStore[Object.keys(data)[i]] = [urlBlockStatus, data[1]];
 
                         browser.storage.local.set(contentToStore);
@@ -171,9 +169,7 @@ async function noAPITitleFromUrl(url) {
         case 404:
             console.log('Not Found');
             return `"${url}" is not a valid video`;
-
     }
-
 }
 
 //url that matches youtubeVideoPattern and a block status
@@ -251,8 +247,7 @@ async function blockmodeInit(value) {
 async function writeBlockToBrowser(url) {
     if (pattern.test(url)) {
         await storagePut(url, true)
-        fillHtml();
-        fillHtmlChecks();
+        updateHtml();
     } else {
         console.log(url + " not youtube");
     }
@@ -285,7 +280,7 @@ function clearHtmlList(list) {
     let resourceUrl = "";
     const blockButton = document.getElementById("postBtn");
     const blockUrlInputField = document.getElementById("blockUrl");
-    const checkToggleButton = document.getElementById("checksButton");
+    const checkToggleButton = document.getElementById("checksBtn");
     const clearStorageButton = document.getElementById("strClearBtn");
     const resourceFetchInputField = document.getElementById("resourceFetch");
     const addResourceButton = document.getElementById("strLoadBtn");
@@ -331,28 +326,6 @@ function clearHtmlList(list) {
     radios.addEventListener("change", radioButtonHandler);
     fillHtml();
     radioInit();
-
-    const apiBtn = document.getElementById("youtubeAPIBtn");
-    apiBtn.addEventListener("click", () => {
-        nameFromUrls();
-    })
-    const unifiedApiBtn = document.getElementById("unifiedFetch");
-    unifiedApiBtn.addEventListener("click", () => {
-        nameList();
-    })
-
-    let fetchUrl = "";
-    const titleFetchInputField = document.getElementById("singleFetch");
-    const noApiTitleButton = document.getElementById("getInfo");
-    noApiTitleButton.addEventListener("click", async () => {
-        console.log(fetchUrl);
-        if (pattern.test(fetchUrl)) {
-            noAPITitleFromUrl(fetchUrl)
-        }
-    });
-    titleFetchInputField.addEventListener("change", (e) => {
-        fetchUrl = e.target.value;
-    });
 })();
 
 //https://www.geeksforgeeks.org/how-to-add-a-custom-right-click-menu-to-a-webpage/ - Remove and copy?
