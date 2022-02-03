@@ -38,51 +38,6 @@ function radioChangeListener(changes, area) {
     }
 }
 
-// Handling for firefox
-function handleProxyRequest3(requestInfo) {
-    //  console.log(requestInfo);
-    return new Promise((resolve, reject) => {
-        if (!requestInfo.url.includes("googlevideo")) {
-            // console.log("Not block worthy");
-            resolve({ type: "direct" });
-        }
-        browser.tabs.query({ active: true }).then(async (tabs) => {
-            let tempUrl = tabs[0].url.slice();
-            await readLocalStorage(tempUrl).then(
-                (data) => {
-                    console.log(data);
-                    //found in storage
-                    if (data[0] == "allow") {
-                        console.log("pass");
-                        resolve({ type: "direct" });
-                    } else if (data[0] == "block") {
-                        console.log("proxy");
-                        resolve({ type: "http", host: "127.0.0.1", port: 65535 });
-                    } else {
-                        resolve({ type: "direct" })
-                    }
-                },
-                async () => {
-                    //not found in storage
-                    if (typeof radioStatus == "undefined") {
-                        radioStatus = (await readLocalStorage("radio")).toLowerCase();
-                    }
-                    console.log("not found in storage");
-                    if (radioStatus == "blacklist") {
-                        console.log("pass");
-                        resolve({ type: "direct" });
-                    } else if (radioStatus == "whitelist") {
-                        console.log("proxy");
-                        resolve({ type: "http", host: "127.0.0.1", port: 65535 });
-                    } else {
-                        resolve({ type: "direct" })
-                    }
-                }
-            );
-        });
-    });
-}
-
 async function setTabBlock() {
     await browser.tabs.query({ active: true }).then(async (tabs) => {
         let tempUrl = tabs[0].url.slice();
@@ -227,14 +182,6 @@ browser.tabs.onUpdated.addListener(() => {
 // Checks and updates radioStatus
 browser.storage.onChanged.addListener(radioChangeListener);
 
-/*/ // Log any errors from the proxy script
-// chrome.proxy.onError.addListener(error => {
-//     console.error(`Proxy error: ${error}`);
-// });
- 
-// // Listen for a request to open a webpage// calls on every https req
-// chrome.proxy.onRequest.addListener(handleProxyRequest3, { urls: ["<all_urls>"] });
-*/
 //Browser differences
 if (navigator.userAgent.indexOf("Chrome") != -1) {
     //chromeProxyHandle();
@@ -283,8 +230,3 @@ if (navigator.userAgent.indexOf("Chrome") != -1) {
 
 //Name
 //Folder based blocking
-
-
-
-
-////// SEND MESSAGE TO CONTENT SCRIPT, TAB.ID????
