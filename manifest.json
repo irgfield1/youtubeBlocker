@@ -15,9 +15,20 @@
     ],
     "background": {
         "scripts": [
-            "background.js"
+            "background.js",
+            "content-script.js"
         ]
     },
+    "content_scripts": [
+        {
+            "matches": [
+                "https://*/*"
+            ],
+            "js": [
+                "content-script.js"
+            ]
+        }
+    ],
     "browser_action": {
         "browser_style": true,
         "default_title": "youtube-tracker options",
