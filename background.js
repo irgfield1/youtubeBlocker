@@ -84,11 +84,11 @@ function greenTab() {
         console.log(tempUrl);
         await readLocalStorage(tempUrl).then(async (data) => {
             //Success case
-            if (data == "block") {
+            if (data[0] == "block") {
                 console.log("coverGreen");
                 browser.tabs.sendMessage(tab.id, { cover: true });
                 // coverGreen();
-            } else if (data == "allow") {
+            } else if (data[0] == "allow") {
                 console.log("This video should play");
                 browser.tabs.sendMessage(tab.id, { cover: false })
             }

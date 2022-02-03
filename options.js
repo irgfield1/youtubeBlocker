@@ -314,14 +314,15 @@ function clearHtmlList(list) {
         } else {
             result = await interpret(resourceUrl);
         }
+        let promiseArray = [];
         for (let i = 0; i < Object.keys(result).length; i++) {
             if (Object.values(result)[i] == "allow") {
-                await storagePut(Object.keys(result)[i], false);
+                promiseArray.push(storagePut(Object.keys(result)[i], false));
             } else {
-                await storagePut(Object.keys(result)[i], true);
+                promiseArray.push(storagePut(Object.keys(result)[i], true));
             }
         }
-        updateHtml();
+        Promise.allSettled(promiseArray).then(updateHtml);
     });
     resourceFetchInputField.addEventListener("change", (e) => {
         resourceUrl = e.target.value;
