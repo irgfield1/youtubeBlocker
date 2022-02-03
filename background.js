@@ -1,6 +1,7 @@
 let youtubeVideoPattern =
     /(http(s)??\:\/\/)?(www\.)?((youtube\.com\/watch\?v=)|(youtu.be\/))([a-zA-Z0-9\-_])+/;
 let radioStatus;
+let currentTabBlock = false;
 
 /*******************FUNCTIONS********************/
 //map entry creation for url, defaults to allow on pageload
@@ -10,20 +11,9 @@ function write2Browser() {
     }
     browser.tabs.query({ active: true }).then(async (tabs) => {
         let tempUrl = tabs[0].url.slice();
-        let present = true;
-        await readLocalStorage(tempUrl)
-            .then(() => (present = true))
-            .catch(() => (present = false));
-        // console.log(present);
-        if (present) {
-            // console.log(tempUrl + " found in storage");
-            return;
-        } else {
-            if (youtubeVideoPattern.test(tempUrl)) {
-                storagePut(tempUrl, false);
-            } else {
-                // console.log(tempUrl + " not youtube");
-            }
+        if (youtubeVideoPattern.test(tempUrl)) {
+            readLocalStorage(tempUrl)
+                .catch(() => (storagePut(tempUrl, false)));
         }
     });
 }
@@ -93,7 +83,46 @@ function handleProxyRequest3(requestInfo) {
     });
 }
 
-function checkTab() {
+async function setTabBlock() {
+    await browser.tabs.query({ active: true }).then(async (tabs) => {
+        let tempUrl = tabs[0].url.slice();
+        await readLocalStorage(tempUrl).then(
+            (data) => {
+                console.log(data);
+                //found in storage
+                currentTabBlock = data[0] == "allow" ? false : true;
+            },
+            async () => {
+                //not found in storage
+                if (typeof radioStatus == "undefined") {
+                    radioStatus = (await readLocalStorage("radio")).toLowerCase();
+                }
+                if (radioStatus == "blacklist") {
+                    currentTabBlock = false;
+                } else if (radioStatus == "whitelist") {
+                    currentTabBlock = true
+                }
+            }
+        );
+    });
+}
+
+
+function handleProxyRequest(requestInfo) {
+    return new Promise((resolve, reject) => {
+        if (!requestInfo.url.includes("googlevideo")) {
+            resolve({ type: "direct" });
+        }
+        console.log(`currentTabBlock ${currentTabBlock}`);
+        if (currentTabBlock) {
+            resolve({ type: "http", host: "127.0.0.1", port: 65535 })
+        } else {
+            resolve({ type: "direct" })
+        }
+    });
+}
+
+function greenTab() {
     browser.tabs.query({ active: true }).then(async (tabs) => {
         let tempUrl = tabs[0].url.slice();
         let tab = tabs[0];
@@ -185,12 +214,14 @@ function chromeBlocking(requestInfo) {
 browser.tabs.onActivated.addListener(async () => {
     // console.log("onActivated");
     write2Browser();
-    checkTab();
+    setTabBlock();
+    greenTab();
 });
 browser.tabs.onUpdated.addListener(() => {
     // console.log("onUpdated");
     write2Browser();
-    checkTab();
+    setTabBlock();
+    greenTab();
 });
 
 // Checks and updates radioStatus
@@ -242,7 +273,7 @@ if (navigator.userAgent.indexOf("Chrome") != -1) {
     });
 
     // Listen for a request to open a webpage// calls on every https req
-    browser.proxy.onRequest.addListener(handleProxyRequest3, {
+    browser.proxy.onRequest.addListener(handleProxyRequest, {
         urls: ["<all_urls>"],
     });
 }

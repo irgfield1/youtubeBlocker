@@ -138,6 +138,7 @@ function toggleChecksDisplay() {
 
 // updates HTML (from storage) and hides whichever was hidden before... probably could load only whichever is currently displayed...
 function updateHtml() {
+    console.log("updateHtml");
     let status = document.getElementById("history").classList.contains("hidden");
     console.log(status);
 
@@ -400,15 +401,14 @@ function clearHtmlList(list) {
         let result = {};
         if (typeof resourceUrl == "undefined" || resourceUrl.length < 1) {
             result = await interpret();
-
         } else {
             result = await interpret(resourceUrl);
         }
         for (let i = 0; i < Object.keys(result).length; i++) {
             if (Object.values(result)[i] == "allow") {
-                storagePut(Object.keys(result)[i], false);
+                await storagePut(Object.keys(result)[i], false);
             } else {
-                storagePut(Object.keys(result)[i], true);
+                await storagePut(Object.keys(result)[i], true);
             }
         }
         updateHtml();
@@ -430,7 +430,7 @@ function clearHtmlList(list) {
         nameList();
     })
 
-    let fetchUrl = ""
+    let fetchUrl = "";
     const titleFetchInputField = document.getElementById("singleFetch");
     const noApiTitleButton = document.getElementById("getInfo");
     noApiTitleButton.addEventListener("click", async () => {
