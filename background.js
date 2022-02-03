@@ -20,12 +20,7 @@ function write2Browser() {
             return;
         } else {
             if (youtubeVideoPattern.test(tempUrl)) {
-                // console.log(pattern);
-                // console.log(tempUrl + " new youtube url");
-
-                let contentToStore = {};
-                contentToStore[tempUrl] = "allow";
-                browser.storage.local.set(contentToStore);
+                storagePut(tempUrl, false);
             } else {
                 // console.log(tempUrl + " not youtube");
             }
@@ -65,16 +60,19 @@ function handleProxyRequest3(requestInfo) {
             let tempUrl = tabs[0].url.slice();
             await readLocalStorage(tempUrl).then(
                 (data) => {
+                    console.log(data);
                     //found in storage
-                    if (data == "allow") {
-                        // console.log("pass");
+                    if (data[0] == "allow") {
+                        console.log("pass");
                         resolve({ type: "direct" });
-                    } else if (data == "block") {
-                        // console.log("proxy");
+                    } else if (data[0] == "block") {
+                        console.log("proxy");
                         resolve({ type: "http", host: "127.0.0.1", port: 65535 });
+                    } else {
+                        resolve({ type: "direct" })
                     }
                 },
-                async (data) => {
+                async () => {
                     //not found in storage
                     if (typeof radioStatus == "undefined") {
                         radioStatus = (await readLocalStorage("radio")).toLowerCase();
@@ -86,6 +84,8 @@ function handleProxyRequest3(requestInfo) {
                     } else if (radioStatus == "whitelist") {
                         console.log("proxy");
                         resolve({ type: "http", host: "127.0.0.1", port: 65535 });
+                    } else {
+                        resolve({ type: "direct" })
                     }
                 }
             );
@@ -93,7 +93,83 @@ function handleProxyRequest3(requestInfo) {
     });
 }
 
-//On Firefox Branch, not used
+function checkTab() {
+    browser.tabs.query({ active: true }).then(async (tabs) => {
+        let tempUrl = tabs[0].url.slice();
+        let tab = tabs[0];
+        console.log(tempUrl);
+        await readLocalStorage(tempUrl).then(async (data) => {
+            //Success case
+            if (data == "block") {
+                console.log("coverGreen");
+                browser.tabs.sendMessage(tab.id, { cover: true });
+                // coverGreen();
+            } else if (data == "allow") {
+                console.log("This video should play");
+                browser.tabs.sendMessage(tab.id, { cover: false })
+            }
+        },
+            (errInfo) => {
+                //failure case
+                if (radioStatus == "blacklist") {
+                    console.log("This video should play");
+                    browser.tabs.sendMessage(tab.id, { cover: false });
+                } else if (radioStatus == "whitelist") {
+                    console.log("coverGreen");
+                    browser.tabs.sendMessage(tab.id, { cover: true })
+                    // coverGreen();
+                }
+            });
+    });
+}
+
+//url that matches youtubeVideoPattern and a block status
+function storagePut(url, block = true) {
+    readLocalStorage(url)
+        .then((data) => {
+            console.log(data);
+            let contentToStore = {};
+            if (block) {
+                contentToStore[url] = ["block", data[1]];
+            } else {
+                contentToStore[url] = ["allow", data[1]];
+            }
+            console.log(contentToStore);
+            browser.storage.local.set(contentToStore);
+        })
+        .catch(async () => {
+            let contentToStore = {}
+            const title = await noAPITitleFromUrl(url);
+            contentToStore[url] = [`${block ? "block" : "allow"}`, title]
+            console.log(contentToStore);
+            browser.storage.local.set(contentToStore);
+        })
+}
+
+async function noAPITitleFromUrl(url) {
+    console.log("noAPITitleFromUrl");
+    let title = "";
+    var response = await fetch(url);
+    switch (response.status) {
+        // status "OK"
+        case 200:
+            let result = await response.blob()
+            console.log(result);
+            await result.text().then(text => {
+                title = text.slice(text.indexOf("<title>") + 7, text.indexOf("</title>"));
+            });
+            console.log(title);
+            return title;
+        // status "Not Found"
+        case 404:
+            console.log('Not Found');
+            return `"${url}" is not a valid video`;
+
+    }
+
+}
+
+//On Firefox Branch, JUST HERE TO PREVENT "let result = chromeBlocking(info);" from breaking
 function chromeBlocking(requestInfo) {
     //technically we can use promises, I just don't know how
     chrome.tabs.query({ active: true }).then(async (tabs) => {
@@ -101,36 +177,6 @@ function chromeBlocking(requestInfo) {
         console.log(tempUrl);
     });
     return { protect: "the child" };
-    // console.log(requestInfo);
-    // if (!requestInfo.url.includes("googlevideo")) {
-    //     console.log("Not block worthy");
-    //     return ({ type: "direct" });
-    // }
-    // browser.tabs.query({ active: true }).then(async (tabs) => {
-    //     let tempUrl = tabs[0].url.slice();
-    //     await readLocalStorage(tempUrl)
-    //         .then(data => {//found in storage
-    //             if (data == "allow") {
-    //                 console.log("pass");
-    //                 return ({ type: "direct" });
-    //             } else if (data == "block") {
-    //                 console.log("proxy");
-    //                 return ({ type: "http", host: "127.0.0.1", port: 65535 });
-    //             }
-    //         }, async data => {//not found in storage
-    //             if (typeof radioStatus == "undefined") {
-    //                 radioStatus = (await readLocalStorage("radio")).toLowerCase();
-    //             }
-    //             console.log("not found in storage");
-    //             if (radioStatus == "blacklist") {
-    //                 console.log("pass");
-    //                 return ({ type: "direct" })
-    //             } else if (radioStatus == "whitelist") {
-    //                 console.log("proxy");
-    //                 return ({ type: "http", host: "127.0.0.1", port: 65535 })
-    //             }
-    //         });
-    // });
 }
 
 /**************LISTENERS************************/
@@ -139,10 +185,12 @@ function chromeBlocking(requestInfo) {
 browser.tabs.onActivated.addListener(async () => {
     // console.log("onActivated");
     write2Browser();
+    checkTab();
 });
 browser.tabs.onUpdated.addListener(() => {
     // console.log("onUpdated");
     write2Browser();
+    checkTab();
 });
 
 // Checks and updates radioStatus
@@ -152,7 +200,7 @@ browser.storage.onChanged.addListener(radioChangeListener);
 // chrome.proxy.onError.addListener(error => {
 //     console.error(`Proxy error: ${error}`);
 // });
-
+ 
 // // Listen for a request to open a webpage// calls on every https req
 // chrome.proxy.onRequest.addListener(handleProxyRequest3, { urls: ["<all_urls>"] });
 */
@@ -204,3 +252,8 @@ if (navigator.userAgent.indexOf("Chrome") != -1) {
 
 //Name
 //Folder based blocking
+
+
+
+
+////// SEND MESSAGE TO CONTENT SCRIPT, TAB.ID????
