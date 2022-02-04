@@ -1,26 +1,26 @@
 {
-  "manifest_version": 3,
-  "name": "Youtube Tracker - ChromeBranch",
-  "description": "Creates a youtube history with URLS, video titles, and channels",
-  "version": "0.1.0",
-  "homepage_url": "https://github.com/irgfield1",
-  "permissions": [
-    "activeTab",
-    "scripting",
-    "storage",
-    "tabs",
-    "alarms",
-    "declarativeNetRequest"
-  ],
-  "background": {
-    "service_worker": "worker.js"
-  },
-  "action": {
-    "browser_style": true,
-    "default_title": "youtube-tracker options",
-    "default_popup": "options.html"
-  },
-  "icons": {
-    "48": "assets/icons/chillout-48.png"
-  }
+    "manifest_version": 3,
+    "name": "Youtube Tracker - ChromeBranch",
+    "description": "Creates a youtube history with URLS, video titles, and channels",
+    "version": "0.1.0",
+    "homepage_url": "https://github.com/irgfield1",
+    "permissions": [
+        "activeTab",
+        "scripting",
+        "storage",
+        "tabs",
+        "alarms",
+        "declarativeNetRequest"
+    ],
+    "background": {
+        "service_worker": "worker.js"
+    },
+    "action": {
+        "browser_style": true,
+        "default_title": "youtube-tracker options",
+        "default_popup": "options.html"
+    },
+    "icons": {
+        "48": "assets/icons/chillout-48.png"
+    }
 }
