@@ -172,6 +172,22 @@ async function noAPITitleFromUrl(url) {
     }
 }
 
+async function callBackgroundFetch(url) {
+    console.log("callBackgroundFetch");
+    let content = { data: url };
+    let result;
+    await browser.runtime.sendMessage(content)
+        .then(data => {
+            result = data;
+            console.log(result + " is the message");
+        })
+        .catch((err) => console.error(err));
+}
+
+function onBackgroundMessage(message) {
+    console.log(message);
+}
+
 //url that matches youtubeVideoPattern and a block status
 async function storagePut(url, block = true) {
     console.log("storagePut");
@@ -180,7 +196,7 @@ async function storagePut(url, block = true) {
             console.log(data);
             let contentToStore = {};
             if (data[1].length == 0) {
-                data[1] = await noAPITitleFromUrl(url);
+                data[1] = await callBackgroundFetch(url);
             }
             if (block) {
                 contentToStore[url] = ["block", data[1]];
@@ -192,7 +208,7 @@ async function storagePut(url, block = true) {
         })
         .catch(async () => {
             let contentToStore = {}
-            const title = await noAPITitleFromUrl(url);
+            const title = await callBackgroundFetch(url);
             console.log("put as new video: " + title);
             contentToStore[url] = [`${block ? "block" : "allow"}`, title]
             console.log(contentToStore);
@@ -326,6 +342,16 @@ function clearHtmlList(list) {
     radios.addEventListener("change", radioButtonHandler);
     fillHtml();
     radioInit();
+
+    browser.runtime.onMessage.addListener(onBackgroundMessage);
+
+    // var port = chrome.extension.connect({
+    //     name: "Sample Communication"
+    // });
+    // port.postMessage("Hi BackGround");
+    // port.onMessage.addListener(function (msg) {
+    //     console.log("message recieved" + msg);
+    // });
 })();
 
 //https://www.geeksforgeeks.org/how-to-add-a-custom-right-click-menu-to-a-webpage/ - Remove and copy?

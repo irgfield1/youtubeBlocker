@@ -16,10 +16,11 @@
         crossorigin="anonymous"></script> -->
 </head>
 
+
 <body>
     <div class="container">
         <div class="select_text">
-            <h3 class="title">YouTube History</h3>
+            <h3 class="title">Boring Youtube Blocker</h3>
             <div id="checks" class="blockable_url_list"></div>
             <ul id="history" class="hList"></ul>
         </div>
@@ -27,59 +28,44 @@
             <div class="input-group mb-3">
                 <input type="text" class="form-control" id="blockUrl" name="website" class="resized_textbox" />
 
-                <body>
-                    <div class="container">
-                        <div class="select_text">
-                            <h3 class="title">Boring Youtube Blocker</h3>
-                            <div id="checks" class="blockable_url_list"></div>
-                            <ul id="history" class="hList"></ul>
-                        </div>
-                        <div>
-                            <div class="input-group mb-3">
-                                <input type="text" class="form-control" id="blockUrl" name="website"
-                                    class="resized_textbox" />
+                <button class="btn btn-danger postButton" id="postBtn">Block</button>
+            </div>
+        </div>
+        <div class="mb-3">
+            <button id="checksBtn" type="button" class="checksBtn btn btn-primary">
+                Checkbox Style
+            </button>
+            <button class="btn btn-danger storageClearButton" id="strClearBtn">
+                Clear Storage
+            </button>
+        </div>
+        <div class="input-group mb-3">
+            <input type="text" class="form-control" id="resourceFetch" name="website" class="resized_textbox" />
+            <button class="btn btn-info storageLoadButton" id="strLoadBtn">
+                Add Resource
+            </button>
+        </div>
+        <form id="proxy_style_form">
+            <div class="form-check">
+                <input class="form-check-input" type="radio" name="proxy_style" id="blacklist" value="Blacklist"
+                    checked />
+                <label class="form-check-label" for="blacklist"> Blacklist </label>
+            </div>
+            <div class="form-check">
+                <input class="form-check-input" type="radio" name="proxy_style" id="split" value="Split" />
+                <label class="form-check-label" for="split"> Split </label>
+            </div>
+            <div class="form-check">
+                <input class="form-check-input" type="radio" name="proxy_style" id="whitelist" value="Whitelist" />
+                <label class="form-check-label" for="whitelist"> Whitelist </label>
+            </div>
+        </form>
+        <ul id="endElement"></ul>
 
-                                <button class="btn btn-danger postButton" id="postBtn">Block</button>
-                            </div>
-                        </div>
-                        <div class="mb-3">
-                            <button id="checksBtn" type="button" class="checksBtn btn btn-primary">
-                                Checkbox Style
-                            </button>
-                            <button class="btn btn-danger storageClearButton" id="strClearBtn">
-                                Clear Storage
-                            </button>
-                        </div>
-                        <div class="input-group mb-3">
-                            <input type="text" class="form-control" id="resourceFetch" name="website"
-                                class="resized_textbox" />
-                            <button class="btn btn-info storageLoadButton" id="strLoadBtn">
-                                Add Resource
-                            </button>
-                        </div>
-                        <form id="proxy_style_form">
-                            <div class="form-check">
-                                <input class="form-check-input" type="radio" name="proxy_style" id="blacklist"
-                                    value="Blacklist" checked />
-                                <label class="form-check-label" for="blacklist"> Blacklist </label>
-                            </div>
-                            <div class="form-check">
-                                <input class="form-check-input" type="radio" name="proxy_style" id="split"
-                                    value="Split" />
-                                <label class="form-check-label" for="split"> Split </label>
-                            </div>
-                            <div class="form-check">
-                                <input class="form-check-input" type="radio" name="proxy_style" id="whitelist"
-                                    value="Whitelist" />
-                                <label class="form-check-label" for="whitelist"> Whitelist </label>
-                            </div>
-                        </form>
-                        <ul id="endElement"></ul>
+        <script src="readAssets.js"></script>
+        <script src="options.js"></script>
 
-                        <script src="readAssets.js"></script>
-                        <script src="options.js"></script>
-
-                    </div>
-                </body>
+    </div>
+</body>
 
 </html>

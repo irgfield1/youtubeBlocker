@@ -7,6 +7,10 @@ let currentTabBlock = false;
 /*******************FUNCTIONS********************/
 //map entry creation for url, defaults to allow on pageload
 function write2Browser() {
+    if (typeof radioStatus == "undefined") {
+        radioChangeListener();
+    }
+    console.log(radioStatus);
     if (radioStatus == "blacklist" || radioStatus == "whitelist") {
         return;
     }
@@ -45,10 +49,20 @@ const readLocalStorage = async (key) => {
 //   }
 //   console.log(radioStatus);
 function radioChangeListener(changes, area) {
-    if (changes.hasOwnProperty("radio")) {
-        radioStatus = changes.radio.newValue.toLowerCase();
+    if (typeof changes != "undefined") {
+        if (changes.hasOwnProperty("radio")) {
+            radioStatus = changes.radio.newValue.toLowerCase();
+        }
     }
 }
+
+// chrome.extension.onConnect.addListener(function (port) {
+//     console.log("Connected .....");
+//     port.onMessage.addListener(function (msg) {
+//         console.log("message recieved" + msg);
+//         port.postMessage("Hi Popup.js");
+//     });
+// })
 
 async function setTabBlock() {
     await browser.tabs.query({ active: true }).then(async (tabs) => {
@@ -248,8 +262,17 @@ function storagePut(url, block = true) {
         })
 }
 
+async function onOptionsMessage(message, sender, sendResponse) {
+    console.log(message);
+    let url = message?.data;
+    let videoTitle = await noAPITitleFromUrl(url);
+    console.log(videoTitle);
+    console.log(videoTitle + " is the title");
+    sendResponse({ title: videoTitle })
+}
+
 async function noAPITitleFromUrl(url) {
-    console.log("noAPITitleFromUrl");
+    console.log("noAPITitleFromUrl : background.js : " + url);
     let title = "";
     var response = await fetch(url);
     switch (response.status) {
@@ -266,9 +289,7 @@ async function noAPITitleFromUrl(url) {
         case 404:
             console.log('Not Found');
             return `"${url}" is not a valid video`;
-
     }
-
 }
 
 //On Firefox Branch, JUST HERE TO PREVENT "let result = chromeBlocking(info);" from breaking
@@ -297,6 +318,8 @@ browser.tabs.onUpdated.addListener(() => {
 });
 
 browser.storage.onChanged.addListener(radioChangeListener);
+
+browser.runtime.onMessage.addListener(onOptionsMessage);
 
 /*/ // Log any errors from the proxy script
 // chrome.proxy.onError.addListener(error => {
@@ -341,3 +364,13 @@ if (navigator.userAgent.indexOf("Chrome") != -1) {
 
 //Name
 //Folder based blocking
+
+
+
+
+// Enumerated changes from main : f36cbef Merge branch videoTitles
+// Get video titles from fetch request, not API
+// Change Proxy logic from every request to onTabChange
+// Change storage data structure
+// Element cover for blocked pages
+// Is the best option to merge?????? -> could be.....
