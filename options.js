@@ -193,7 +193,7 @@ async function storagePut(url, block = true) {
         .catch(async () => {
             let contentToStore = {}
             const title = await noAPITitleFromUrl(url);
-            console.log("catch storage put" + title);
+            console.log("put as new video: " + title);
             contentToStore[url] = [`${block ? "block" : "allow"}`, title]
             console.log(contentToStore);
             browser.storage.local.set(contentToStore);

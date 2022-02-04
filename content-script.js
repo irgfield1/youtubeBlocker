@@ -13,8 +13,10 @@ function coverGreen() {
         let videoContainer = document.getElementById("player-container-outer");
         let blockDiv = document.createElement('div');
         blockDiv.id = "coverGreen";
-        blockDiv.style.cssText += "position: absolute;width: 100%;height: 100%;background: green;text-align:center;z-index: 99999;";
-        blockDiv.innerText = "Blocked";
+        blockDiv.style.cssText += "position: absolute;width: 100%;height: 100%;background: green;text-align:center;vertical-align:middle;z-index: 99999;";
+        let header = document.createElement('h1');
+        header.innerText = "Blocked";
+        blockDiv.prepend(header);
         videoContainer.prepend(blockDiv);
     }, 1000)
 }

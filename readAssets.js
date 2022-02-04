@@ -2,6 +2,9 @@ let youtubeVideoPattern =
     /(http(s)??\:\/\/)?(www\.)?((youtube\.com\/watch\?v=)|(youtu.be\/))([a-zA-Z0-9\-_])+/;
 
 async function interpret(textAsset = "assets/blockfolder/data.txt") {
+
+    textAsset = textAsset.replace(/\\+/g, "/");
+    console.log(textAsset);
     let content = await fetchStorage(textAsset);
 
     console.log(Object.keys(content));
@@ -42,11 +45,14 @@ async function fetchStorage(textAsset) {
         async (data) => {
             console.log(data);
             let dataReader = data.body.getReader();
+            console.log(dataReader);
             let codedText = await dataReader.read();
+            console.log(codedText);
             const utf8Decoder = new TextDecoder("utf-8");
             let plainText = utf8Decoder.decode(codedText?.value);
+            console.log(plainText);
             contentToStore = JSON.parse(plainText);
-            console.log("FINISH");
+            console.log(contentToStore);
         },
         (err) => {
             console.error(err);
