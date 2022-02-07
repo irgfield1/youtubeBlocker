@@ -47,8 +47,9 @@ Just step by step
 ## Known Bugs
 
 - Bootstrap will not stay on one line on chrome
-- No youtube api thus block channel functionality...
+- No youtube api thus block channel functionality... on Chrome...
 - If you navigate away from the tab, the video plays in the background...
+- Covergreen might not work when ads are displayed, but I don't really knowwwww
 
 ## Confusion
 

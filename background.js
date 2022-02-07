@@ -85,7 +85,7 @@ async function setTabBlock() {
                 }
             }
         );
-    });
+    }).catch(err => console.error(err));
 }
 
 
@@ -104,19 +104,30 @@ function handleProxyRequest(requestInfo) {
 }
 
 function greenTab() {
+    console.log("greenTab init");
     browser.tabs.query({ active: true }).then(async (tabs) => {
         let tempUrl = tabs[0].url.slice();
         let tab = tabs[0];
         console.log(tempUrl);
         await readLocalStorage(tempUrl).then(async (data) => {
             //Success case
+            console.log(data);
             if (data[0] == "block") {
                 console.log("coverGreen");
-                browser.tabs.sendMessage(tab.id, { cover: true });
+                // browser.tabs.sendMessage(tab.id, { cover: true });
+                chrome.tabs.query({ active: true, currentWindow: true }, function (tabs) {
+                    chrome.tabs.sendMessage(tabs[0].id, { cover: true }, function (response) {
+                        console.log(response);
+                    });
+                });
                 // coverGreen();
             } else if (data[0] == "allow") {
                 console.log("This video should play");
-                browser.tabs.sendMessage(tab.id, { cover: false })
+                chrome.tabs.query({ active: true, currentWindow: true }, function (tabs) {
+                    chrome.tabs.sendMessage(tabs[0].id, { cover: false }, function (response) {
+                        console.log(response);
+                    });
+                });
             }
         },
             (errInfo) => {

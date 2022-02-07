@@ -15,6 +15,16 @@
     "background": {
         "service_worker": "worker.js"
     },
+    "content_scripts": [
+        {
+            "matches": [
+                "https://*.youtube.com/*"
+            ],
+            "js": [
+                "content-script.js"
+            ]
+        }
+    ],
     "action": {
         "browser_style": true,
         "default_title": "youtube-tracker options",
