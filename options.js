@@ -15,12 +15,18 @@ async function fillHtml() {
             if (typeof data != "undefined") {
                 let myList = document.getElementById("history");
                 clearHtmlList(myList);
-
+                console.log(Object.values(data));
                 for (let i = 0; i < Object.keys(data).length; i++) {
                     if (Object.keys(data)[i] == "radio") {
                         continue;
                     }
-                    let myUrl = Object.values(data)[i][1] + " : " + Object.values(data)[i][0];
+                    let myUrl;
+                    // typeof null == 'object'
+                    if (Object.values(data)[i][1] == null) {
+                        myUrl = Object.keys(data)[i] + " : " + Object.values(data)[i][0];
+                    } else {
+                        myUrl = Object.values(data)[i][1] + " : " + Object.values(data)[i][0];
+                    }
                     var li = document.createElement("li");
                     li.appendChild(document.createTextNode(myUrl));
                     myList.appendChild(li);
@@ -67,7 +73,7 @@ function fillHtmlChecks() {
                     }
                     const html = `<input type="checkbox" id="youtubeURL${i}" class="checks" ${Object.values(data)[i][0] == "allow" ? "checked" : ""
                         } name="url${i}" value="${Object.keys(data)[i]}">
-                         <label for="youtubeURL${i}" id="checkboxLabel${i}"> ${Object.values(data)[i][1]
+                         <label for="youtubeURL${i}" id="checkboxLabel${i}"> ${Object.values(data)[i][1] != null ? Object.values(data)[i][1] : Object.keys(data)[i]
                         } : ${Object.values(data)[i][0]}</label>
                          <button id="copyBtn${i}" type="button" class="btn btn-outline-info">Copy</button>
                          <button id="clearBtn${i}" type="button" class="btn btn-outline-danger" align="right">Delete</button><br>`;
@@ -304,9 +310,11 @@ function clearHtmlList(list) {
 
     blockButton.addEventListener("click", () => {
         if (youtubeUrl) {
-            writeBlockToBrowser(youtubeUrl);
+            // writeBlockToBrowser(youtubeUrl);
+            callBackgroundFetch(youtubeUrl);
         }
     });
+
     blockUrlInputField.addEventListener("change", (e) => {
         youtubeUrl = e.target.value;
     });
