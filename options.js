@@ -87,13 +87,13 @@ function fillHtmlChecks() {
                     checklist[i].addEventListener("input", async () => {
                         let myList = document.querySelector(".blockable_url_list");
                         let contentToStore = {};
-                        let data = await browser.storage.local.get(Object.keys(data)[i])
-                        console.log(data);
+                        let title = (await browser.storage.local.get(Object.keys(data)[i]))[1];
+                        console.log(title);
 
                         let urlBlockStatus = document.querySelector(`#youtubeURL${i}`)
                             .checked ? "allow" : "block";
-                        contentToStore[Object.keys(data)[i]] = [urlBlockStatus, data[1]];
-
+                        contentToStore[Object.keys(data)[i]] = [urlBlockStatus, title];
+                        console.log(contentToStore);
                         browser.storage.local.set(contentToStore);
                         document.getElementById(`checkboxLabel${i}`).innerHTML = `${Object.values(data)[i][1]
                             } : ${urlBlockStatus}`;
