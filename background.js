@@ -2,14 +2,12 @@
 let youtubeVideoPattern =
     /(http(s)??\:\/\/)?(www\.)?((youtube\.com\/watch\?v=)|(youtu.be\/))([a-zA-Z0-9\-_])+/;
 let radioStatus;
-let currentTabBlock = false;
+
 
 /*******************FUNCTIONS********************/
 //map entry creation for url, defaults to allow on pageload
-function write2Browser() {
-    if (typeof radioStatus == "undefined") {
-        radioChangeListener();
-    }
+async function write2Browser() {
+    radioStatus = await radioChangeListener();
     console.log(radioStatus);
     if (radioStatus == "blacklist" || radioStatus == "whitelist") {
         return;
@@ -25,7 +23,6 @@ function write2Browser() {
 
 // Key helper function
 const readLocalStorage = async (key) => {
-    console.log(key);
     return new Promise((resolve, reject) => {
         browser.storage.local.get(key).then(function (result) {
             if (result[key] === undefined) {
@@ -37,23 +34,12 @@ const readLocalStorage = async (key) => {
     });
 }
 
-// Updates radioStatus within this file
-// function radioChangeListener(changes = {}) {
-//     console.log(changes);
-//   if (changes.hasOwnProperty("radio")) {
-//       console.log("Has radio");
-//     radioStatus = changes.radio.newValue.toLowerCase();
-//   } else {
-//       console.log("has not radio");
-//     radioStatus = "split";
-//   }
-//   console.log(radioStatus);
-function radioChangeListener(changes, area) {
-    if (typeof changes != "undefined") {
-        if (changes.hasOwnProperty("radio")) {
-            radioStatus = changes.radio.newValue.toLowerCase();
-        }
-    }
+async function radioChangeListener() {
+    await readLocalStorage("radio").then(data => {
+        return data.toLowerCase();
+    }).catch(() => {
+        return "split";
+    })
 }
 
 // chrome.extension.onConnect.addListener(function (port) {
@@ -63,31 +49,6 @@ function radioChangeListener(changes, area) {
 //         port.postMessage("Hi Popup.js");
 //     });
 // })
-
-async function setTabBlock() {
-    await browser.tabs.query({ active: true }).then(async (tabs) => {
-        let tempUrl = tabs[0].url.slice();
-        await readLocalStorage(tempUrl).then(
-            (data) => {
-                console.log(data);
-                //found in storage
-                currentTabBlock = data[0] == "allow" ? false : true;
-            },
-            async () => {
-                //not found in storage
-                if (typeof radioStatus == "undefined") {
-                    radioStatus = (await readLocalStorage("radio")).toLowerCase();
-                }
-                if (radioStatus == "blacklist") {
-                    currentTabBlock = false;
-                } else if (radioStatus == "whitelist") {
-                    currentTabBlock = true
-                }
-            }
-        );
-    }).catch(err => console.error(err));
-}
-
 
 function handleProxyRequest(requestInfo) {
     return new Promise((resolve, reject) => {
@@ -113,30 +74,28 @@ function greenTab() {
             //Success case
             console.log(data);
             if (data[0] == "block") {
-                console.log("coverGreen");
                 // browser.tabs.sendMessage(tab.id, { cover: true });
                 chrome.tabs.query({ active: true, currentWindow: true }, function (tabs) {
-                    chrome.tabs.sendMessage(tabs[0].id, { cover: true }, function (response) {
+                    console.log(tabs);
+                    chrome.tabs.sendMessage(tabs[0]?.id, { cover: true }, function (response) {
                         console.log(response);
                     });
                 });
                 // coverGreen();
             } else if (data[0] == "allow") {
-                console.log("This video should play");
                 chrome.tabs.query({ active: true, currentWindow: true }, function (tabs) {
-                    chrome.tabs.sendMessage(tabs[0].id, { cover: false }, function (response) {
+                    chrome.tabs.sendMessage(tabs[0]?.id, { cover: false }, function (response) {
                         console.log(response);
                     });
                 });
             }
         },
-            (errInfo) => {
+            async (errInfo) => {
                 //failure case
+                radioStatus = await radioChangeListener();
                 if (radioStatus == "blacklist") {
-                    console.log("This video should play");
                     browser.tabs.sendMessage(tab.id, { cover: false });
                 } else if (radioStatus == "whitelist") {
-                    console.log("coverGreen");
                     browser.tabs.sendMessage(tab.id, { cover: true })
                     // coverGreen();
                 }
@@ -144,47 +103,8 @@ function greenTab() {
     });
 }
 
-function chromeProxyHandle() {
-    //check url using tabs,
-    //apply rule
-    //detect changes in url
-    //add or remove rule...
-    if (!requestInfo.url.includes("googlevideo")) {
-        console.log("Not block worthy");
-        resolve({ type: "direct" });
-    }
-    browser.tabs.query({ active: true }).then(async (tabs) => {
-        let tempUrl = tabs[0].url.slice();
-        await readLocalStorage(tempUrl).then(
-            (data) => {
-                //found in storage
-                if (data == "allow") {
-                    console.log("pass");
-                    resolve({ type: "direct" });
-                } else if (data == "block") {
-                    console.log("proxy");
-                    resolve({ type: "http", host: "127.0.0.1", port: 65535 });
-                }
-            },
-            async (data) => {
-                //not found in storage
-                if (typeof radioStatus == "undefined") {
-                    radioStatus = (await readLocalStorage("radio")).toLowerCase();
-                }
-                console.log("not found in storage");
-                if (radioStatus == "blacklist") {
-                    console.log("pass");
-                    resolve({ type: "direct" });
-                } else if (radioStatus == "whitelist") {
-                    console.log("proxy");
-                    resolve({ type: "http", host: "127.0.0.1", port: 65535 });
-                }
-            }
-        );
-    });
-}
-
 async function blockCheck() {
+    console.log("blockCheck");
     //check url using tabs,
     //apply rule
     //detect changes in url
@@ -195,11 +115,12 @@ async function blockCheck() {
     }
     console.log(tab);
     if (youtubeVideoPattern.test(tab.url)) {
+        console.log("Matches regex");
         await readLocalStorage(tab.url).then(
             (data) => {
                 console.log(data); //block/allow
                 //base rule
-                setBrowserRules(data);
+                setBrowserRules(data[0]);
 
                 chrome.declarativeNetRequest
                     .getDynamicRules()
@@ -207,9 +128,7 @@ async function blockCheck() {
             },
             async (data) => {
                 //current url not found in storage
-                if (typeof radioStatus == "undefined") {
-                    radioStatus = (await readLocalStorage("radio")).toLowerCase();
-                }
+                radioStatus = await radioChangeListener();
                 if (radioStatus == "blacklist") {
                     setBrowserRules("allow");
                 } else if (radioStatus == "whitelist") {
@@ -217,10 +136,13 @@ async function blockCheck() {
                 }
             }
         );
+    } else {
+        console.log("Didn't match regex");
     }
 }
 
 function setBrowserRules(blockStatus) {
+    console.log(blockStatus);
     if (blockStatus == "block") {
         let rule = {
             id: 1,
@@ -303,28 +225,18 @@ async function noAPITitleFromUrl(url) {
     }
 }
 
-//On Firefox Branch, JUST HERE TO PREVENT "let result = chromeBlocking(info);" from breaking
-function chromeBlocking(requestInfo) {
-    //technically we can use promises, I just don't know how
-    chrome.tabs.query({ active: true }).then(async (tabs) => {
-        let tempUrl = tabs[0].url.slice();
-        console.log(tempUrl);
-    });
-    return { protect: "the child" };
-}
-
 /**************LISTENERS************************/
 
 browser.tabs.onActivated.addListener(async () => {
+    console.log("onActivated");
     write2Browser();
     blockCheck();
-    setTabBlock();
     greenTab();
 });
 browser.tabs.onUpdated.addListener(() => {
+    console.log("onUpdated");
     write2Browser();
     blockCheck();
-    setTabBlock();
     greenTab();
 });
 

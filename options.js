@@ -127,7 +127,7 @@ function toggleChecksDisplay() {
     fillHtmlChecks();
     let bulletList = document.getElementById("history");
     let checksList = document.getElementById("checks");
-    let button = document.getElementById("checksButton");
+    let button = document.getElementById("checksBtn");
 
     if (bulletList.classList.contains("hidden")) {
         bulletList.classList.remove("hidden");

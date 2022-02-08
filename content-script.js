@@ -1,7 +1,11 @@
 chrome.runtime.onMessage.addListener(
     function (request, sender, sendResponse) {
         console.log(request);
-        coverGreen();
+        if (request?.cover) {
+            coverGreen();
+        } else {
+            uncoverGreen();
+        }
         /*console.log(sender.tab ?
             "from a content script:" + sender.tab.url :
             "from the extension");*/
@@ -38,9 +42,13 @@ function coverGreen() {
 }
 
 function uncoverGreen() {
-    let blockDiv = document.getElementById("coverGreen");
-    console.log(blockDiv);
-    blockDiv.remove();
+    setTimeout(() => {
+        let blockDiv = document.getElementById("coverGreen");
+        console.log(blockDiv);
+        if (blockDiv != null) {
+            blockDiv.remove();
+        }
+    }, 2000);
 }
 
 /*
