@@ -1,18 +1,19 @@
 chrome.runtime.onMessage.addListener(
     function (request, sender, sendResponse) {
-        console.log(request);
-        if (request?.cover) {
-            coverGreen();
+        console.log(request);// In current tab console, not extension console
+        if (request?.title) {
+            // setTimeout((){
+            console.log(document.title);
+            sendResponse({ title: `${document.title}` })
+            //    }, 100);
         } else {
-            uncoverGreen();
+            if (request?.cover) {
+                coverGreen();
+            } else {
+                uncoverGreen();
+            }
+            return true;
         }
-        /*console.log(sender.tab ?
-            "from a content script:" + sender.tab.url :
-            "from the extension");*/
-        if (request.greeting === "hello")
-            sendResponse({ farewell: "goodbye" });
-
-        return true;
     }
 );
 // browser.runtime.onMessage.addListener((data) => {
@@ -50,6 +51,7 @@ function uncoverGreen() {
         }
     }, 2000);
 }
+
 
 /*
 Get title from url 2

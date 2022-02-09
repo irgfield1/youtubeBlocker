@@ -95,7 +95,7 @@ function fillHtmlChecks() {
                         contentToStore[Object.keys(data)[i]] = [urlBlockStatus, title];
                         console.log(contentToStore);
                         browser.storage.local.set(contentToStore);
-                        document.getElementById(`checkboxLabel${i}`).innerHTML = `${Object.values(data)[i][1]
+                        document.getElementById(`checkboxLabel${i}`).innerHTML = `${Object.values(data)[i][1] != null ? Object.values(data)[i][1] : Object.keys(data)[i]
                             } : ${urlBlockStatus}`;
                     });
                 }
@@ -266,9 +266,9 @@ async function blockmodeInit(value) {
 ////////////////////////////////////////////
 /***************Utility Functions**********/
 //block button handler for first textbox
-async function writeBlockToBrowser(url) {
+async function writeBlockToBrowser(url, text) {
     if (pattern.test(url)) {
-        await storagePut(url, true)
+        await storagePut(url, text.toLowerCase() == "block" ? true : false)
         updateHtml();
     } else {
         console.log(url + " not youtube");
@@ -310,8 +310,8 @@ function clearHtmlList(list) {
 
     blockButton.addEventListener("click", () => {
         if (youtubeUrl) {
-            // writeBlockToBrowser(youtubeUrl);
-            callBackgroundFetch(youtubeUrl);
+            writeBlockToBrowser(youtubeUrl, blockButton.textContent);
+            // callBackgroundFetch(youtubeUrl);
         }
     });
 
@@ -350,16 +350,6 @@ function clearHtmlList(list) {
     radios.addEventListener("change", radioButtonHandler);
     fillHtml();
     radioInit();
-
-    browser.runtime.onMessage.addListener(onBackgroundMessage);
-
-    // var port = chrome.extension.connect({
-    //     name: "Sample Communication"
-    // });
-    // port.postMessage("Hi BackGround");
-    // port.onMessage.addListener(function (msg) {
-    //     console.log("message recieved" + msg);
-    // });
 })();
 
 //https://www.geeksforgeeks.org/how-to-add-a-custom-right-click-menu-to-a-webpage/ - Remove and copy?

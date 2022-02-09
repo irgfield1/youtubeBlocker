@@ -4,7 +4,7 @@ let youtubeVideoPattern =
 let radioStatus;
 
 
-/*******************FUNCTIONS********************/
+/*******************TOP LEVEL FUNCTIONS********************/
 //map entry creation for url, defaults to allow on pageload
 async function write2Browser() {
     radioStatus = await radioChangeListener();
@@ -17,49 +17,6 @@ async function write2Browser() {
         if (youtubeVideoPattern.test(tempUrl)) {
             readLocalStorage(tempUrl)
                 .catch(() => (storagePut(tempUrl, false)));
-        }
-    });
-}
-
-// Key helper function
-const readLocalStorage = async (key) => {
-    return new Promise((resolve, reject) => {
-        browser.storage.local.get(key).then(function (result) {
-            if (result[key] === undefined) {
-                reject();
-            } else {
-                resolve(result[key]);
-            }
-        });
-    });
-}
-
-async function radioChangeListener() {
-    await readLocalStorage("radio").then(data => {
-        return data.toLowerCase();
-    }).catch(() => {
-        return "split";
-    })
-}
-
-// chrome.extension.onConnect.addListener(function (port) {
-//     console.log("Connected .....");
-//     port.onMessage.addListener(function (msg) {
-//         console.log("message recieved" + msg);
-//         port.postMessage("Hi Popup.js");
-//     });
-// })
-
-function handleProxyRequest(requestInfo) {
-    return new Promise((resolve, reject) => {
-        if (!requestInfo.url.includes("googlevideo")) {
-            resolve({ type: "direct" });
-        }
-        console.log(`currentTabBlock ${currentTabBlock}`);
-        if (currentTabBlock) {
-            resolve({ type: "http", host: "127.0.0.1", port: 65535 })
-        } else {
-            resolve({ type: "direct" })
         }
     });
 }
@@ -140,6 +97,48 @@ async function blockCheck() {
         console.log("Didn't match regex");
     }
 }
+/**************HELPERS**************************/
+
+// Redefines browser.storage.local.get
+const readLocalStorage = async (key) => {
+    return new Promise((resolve, reject) => {
+        browser.storage.local.get(key).then(function (result) {
+            if (result[key] === undefined) {
+                reject();
+            } else {
+                resolve(result[key]);
+            }
+        });
+    });
+}
+
+//url that matches youtubeVideoPattern and a block status
+function storagePut(url, block = true) {
+    readLocalStorage(url)
+        .then(async (data) => {
+            console.log(data);
+            let contentToStore = {};
+            contentToStore[url] = [`${block ? "block" : "allow"}`, data[1]]
+            browser.storage.local.set(contentToStore);
+        })
+        .catch(async () => {
+            console.log("storagePut new url");
+            let contentToStore = {}
+            contentToStore[url] = [`${block ? "block" : "allow"}`, null]
+            console.log(contentToStore);
+            browser.storage.local.set(contentToStore);
+        })
+}
+
+// Fetches radio button state from storage with default
+async function radioChangeListener() {
+    return await readLocalStorage("radio").then(data => {
+        console.log(data);
+        return data.toLowerCase();
+    }).catch(() => {
+        return "split";
+    })
+}
 
 function setBrowserRules(blockStatus) {
     console.log(blockStatus);
@@ -167,63 +166,11 @@ function setBrowserRules(blockStatus) {
 }
 
 async function getCurrentTab() {
-    chrome.storage.local.get(null).then((data) => console.log(data));
     let queryOptions = { active: true, currentWindow: true };
     let [tab] = await chrome.tabs.query(queryOptions);
     return tab;
 }
-//url that matches youtubeVideoPattern and a block status
-function storagePut(url, block = true) {
-    readLocalStorage(url)
-        .then((data) => {
-            console.log(data);
-            let contentToStore = {};
-            if (block) {
-                contentToStore[url] = ["block", data[1]];
-            } else {
-                contentToStore[url] = ["allow", data[1]];
-            }
-            console.log(contentToStore);
-            browser.storage.local.set(contentToStore);
-        })
-        .catch(async () => {
-            let contentToStore = {}
-            const title = await noAPITitleFromUrl(url);
-            contentToStore[url] = [`${block ? "block" : "allow"}`, title]
-            console.log(contentToStore);
-            browser.storage.local.set(contentToStore);
-        })
-}
 
-async function onOptionsMessage(message, sender, sendResponse) {
-    console.log(message);
-    let url = message?.data;
-    let videoTitle = await noAPITitleFromUrl(url);
-    console.log(videoTitle);
-    console.log(videoTitle + " is the title");
-    sendResponse({ title: videoTitle })
-}
-
-async function noAPITitleFromUrl(url) {
-    console.log("noAPITitleFromUrl : background.js : " + url);
-    let title = "";
-    var response = await fetch(url);
-    switch (response.status) {
-        // status "OK"
-        case 200:
-            let result = await response.blob()
-            console.log(result);
-            await result.text().then(text => {
-                title = text.slice(text.indexOf("<title>") + 7, text.indexOf("</title>"));
-            });
-            console.log(title);
-            return title;
-        // status "Not Found"
-        case 404:
-            console.log('Not Found');
-            return `"${url}" is not a valid video`;
-    }
-}
 
 /**************LISTENERS************************/
 
@@ -240,43 +187,66 @@ browser.tabs.onUpdated.addListener(() => {
     greenTab();
 });
 
-browser.storage.onChanged.addListener(radioChangeListener);
-
-browser.runtime.onMessage.addListener(onOptionsMessage);
-
-/*/ // Log any errors from the proxy script
-// chrome.proxy.onError.addListener(error => {
-//     console.error(`Proxy error: ${error}`);
-// });
- 
-// // Listen for a request to open a webpage// calls on every https req
-// chrome.proxy.onRequest.addListener(handleProxyRequest3, { urls: ["<all_urls>"] });
-*/
-
 if (navigator.userAgent.indexOf("Chrome") != -1) {
-    //chromeProxyHandle();
     console.log("Using Chrome");
-    var config = {
-        mode: "pac_script",
-        pacScript: { url: "proxy.pac" },
-    };
-    // chrome.proxy.onRequest.addListener(handleProxyRequest3, { urls: ["<all_urls>"] });
 } else {
-    console.log("firey foxy ditected");
-    // Log any errors from the proxy script
-    browser.proxy.onError.addListener((error) => {
-        console.error(`Proxy error: ${error}`);
-    });
+    console.log("firefox detected, this branch compatible with chrome");
 
-    // Listen for a request to open a webpage// calls on every https req
-    browser.proxy.onRequest.addListener(handleProxyRequest, {
-        urls: ["<all_urls>"],
-    });
 }
-//cross platform
-//if statement?
-//Lol he says working with an extension is painful
-//Allow you to work on it without the browser extension
+
+//****************Code That Doesn't Work******************************* */
+
+// async function onOptionsMessage(message, sender, sendResponse) {
+//     console.log(message);
+//     let url = message?.data;
+//     let videoTitle = await noAPITitleFromUrl(url);
+//     console.log(videoTitle);
+//     console.log(videoTitle + " is the title");
+//     sendResponse({ title: videoTitle })
+// }
+
+// async function noAPITitleFromUrl(url) {
+//     console.log("noAPITitleFromUrl : background.js : " + url);
+//     let title = "";
+//     var response = await fetch(url);
+//     switch (response.status) {
+//         // status "OK"
+//         case 200:
+//             let result = await response.blob()
+//             console.log(result);
+//             await result.text().then(text => {
+//                 title = text.slice(text.indexOf("<title>") + 7, text.indexOf("</title>"));
+//             });
+//             console.log(title);
+//             return title;
+//         // status "Not Found"
+//         case 404:
+//             console.log('Not Found');
+//             return `"${url}" is not a valid video`;
+//     }
+// }
+
+// async function titleFromCurrentPage() {
+//     return new Promise((resolve, reject) => {
+//         let title;
+//         chrome.tabs.query({ active: true, currentWindow: true }, function (tabs) {
+//             if (tabs[0] != null) {
+//                 chrome.tabs.sendMessage(tabs[0]?.id, { title: true }, function (response) {
+//                     console.log(response);
+//                     title = response?.title;
+//                     console.log(title);
+//                 });
+//             }
+//         });
+//         resolve(title);
+
+//     });
+// }
+
+
+
+
+
 
 //check url using tabs,
 //apply rule
