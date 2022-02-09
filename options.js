@@ -79,14 +79,11 @@ function fillHtmlChecks() {
                 // Event listener for checkbox toggle
                 for (let i = 0; i < checklist.length; i++) {
                     checklist[i].addEventListener("input", async () => {
-                        let myList = document.querySelector(".blockable_url_list");
+                        // let myList = document.querySelector(".blockable_url_list");
                         let contentToStore = {};
-                        let data = await browser.storage.local.get(Object.keys(data)[i])
-                        console.log(data);
-
                         let urlBlockStatus = document.querySelector(`#youtubeURL${i}`)
                             .checked ? "allow" : "block";
-                        contentToStore[Object.keys(data)[i]] = [urlBlockStatus, data[1]];
+                        contentToStore[Object.keys(data)[i]] = [urlBlockStatus, Object.values(data)[i][1]];
 
                         browser.storage.local.set(contentToStore);
                         document.getElementById(`checkboxLabel${i}`).innerHTML = `${Object.values(data)[i][1]
@@ -121,7 +118,7 @@ function toggleChecksDisplay() {
     fillHtmlChecks();
     let bulletList = document.getElementById("history");
     let checksList = document.getElementById("checks");
-    let button = document.getElementById("checksButton");
+    let button = document.getElementById("checksBtn");
 
     if (bulletList.classList.contains("hidden")) {
         bulletList.classList.remove("hidden");
@@ -244,9 +241,9 @@ async function blockmodeInit(value) {
 ////////////////////////////////////////////
 /***************Utility Functions**********/
 //block button handler for first textbox
-async function writeBlockToBrowser(url) {
+async function writeBlockToBrowser(url, text) {
     if (pattern.test(url)) {
-        await storagePut(url, true)
+        await storagePut(url, text.toLowerCase() == "block" ? true : false)
         updateHtml();
     } else {
         console.log(url + " not youtube");
@@ -288,7 +285,7 @@ function clearHtmlList(list) {
 
     blockButton.addEventListener("click", () => {
         if (youtubeUrl) {
-            writeBlockToBrowser(youtubeUrl);
+            writeBlockToBrowser(youtubeUrl, blockButton.textContent);
         }
     });
     blockUrlInputField.addEventListener("change", (e) => {
