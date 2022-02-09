@@ -7,8 +7,7 @@ async function interpret(textAsset = "assets/blockfolder/data.txt") {
     console.log(textAsset);
     let content = await fetchStorage(textAsset);
 
-    console.log(Object.keys(content));
-    console.log(Object.values(content));
+    console.log(content);
     let contentToStore = {};
     for (let i = 0; i < Object.keys(content).length; i++) {
         if (Object.keys(content)[i].toLowerCase() == "allow") {
@@ -19,6 +18,11 @@ async function interpret(textAsset = "assets/blockfolder/data.txt") {
             for (let j = 0; j < Object.values(content)[i].length; j++) {
                 contentToStore[Object.values(content)[i][j]] = "block";
             }
+        } else if (Object.keys(content)[i].toLowerCase() == "title") {
+            console.log(Object.values(content)[i]);
+            contentToStore.title = Object.values(content)[i];
+        } else if (Object.keys(content)[i].toLowerCase() == "tags") {
+            contentToStore.tags = Object.values(content)[i];
         } else {
             continue;
         }
@@ -45,12 +49,9 @@ async function fetchStorage(textAsset) {
         async (data) => {
             console.log(data);
             let dataReader = data.body.getReader();
-            console.log(dataReader);
             let codedText = await dataReader.read();
-            console.log(codedText);
             const utf8Decoder = new TextDecoder("utf-8");
             let plainText = utf8Decoder.decode(codedText?.value);
-            console.log(plainText);
             contentToStore = JSON.parse(plainText);
             console.log(contentToStore);
         },
@@ -58,10 +59,5 @@ async function fetchStorage(textAsset) {
             console.error(err);
         }
     );
-
-    let storage = await browser.storage.local.get();
-    console.log(storage);
-
-    console.log(contentToStore);
     return contentToStore;
 }

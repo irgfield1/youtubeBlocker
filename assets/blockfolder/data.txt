@@ -5,5 +5,7 @@
 
     "allow": ["https://www.youtube.com/watch?v=_BLIJ8I3EwQ",
         "https://www.youtube.com/watch?v=lujvlukHAqU",
-        "https://www.youtube.com/watch?v=OkCX8d8WSOg"]
+        "https://www.youtube.com/watch?v=OkCX8d8WSOg"],
+    "title": "testData",
+    "tags": ["8+", "JSON", "TEST"]
 }
