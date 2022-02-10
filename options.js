@@ -301,9 +301,18 @@ function clearHtmlList(list) {
     });
 
     checkToggleButton.addEventListener("click", toggleChecksDisplay);
-    clearStorageButton.addEventListener("click", () => {
-        browser.storage.local.clear();
-        updateHtml();
+    clearStorageButton.addEventListener("click", async () => {
+        browser.storage.local.get().then((data) => {
+            let promiseArray = [];
+            for (let i = 0; i < Object.keys(data).length; i++) {
+                if (Object.keys(data)[i] == "radio" || Object.keys(data)[i] == "resource") {
+                    continue;
+                }
+                promiseArray.push(browser.storage.local.remove(Object.keys(data)[i]));
+            }
+            Promise.allSettled(promiseArray).then(updateHtml);
+
+        })
     });
 
     addResourceButton.addEventListener("click", async () => {

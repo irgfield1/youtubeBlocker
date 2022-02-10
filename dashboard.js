@@ -2,6 +2,10 @@ function fillHtml() {
     // Get title : Tags : Urls from storage
     // Make list out of them
     // Make it great!
+    let list = document.getElementById("divWeb");
+    while (list.firstChild) {
+        list.removeChild(list.firstChild);
+    }
     readLocalStorage("resource").then((data) => {
         for (let i = 0; i < data.length; i++) {
             addList(data[i].url, data[i].title, data[i].tags);
@@ -160,6 +164,9 @@ const readLocalStorage = async (key) => {
 let resourceUrl = "";
 const resourceFetchInputField = document.getElementById("resourceFetch");
 const addResourceButton = document.getElementById("strLoadBtn");
+const clearLibraryBtn = document.getElementById("rscStrClearBtn");
+const clearAllStorageBtn = document.getElementById("allStrClearBtn");
+
 console.log(addResourceButton);
 resourceFetchInputField.addEventListener("change", (e) => {
     resourceUrl = e.target.value;
@@ -188,5 +195,13 @@ addResourceButton.addEventListener("click", async () => {
     // }
     // Promise.allSettled(promiseArray);
 });
+clearLibraryBtn.addEventListener("click", async () => {
+    await browser.storage.local.remove("resource");
+    fillHtml();
+})
+clearAllStorageBtn.addEventListener("click", () => {
+    browser.storage.local.clear();
+    fillHtml();
+})
 
 fillHtml();
