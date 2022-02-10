@@ -202,7 +202,7 @@ async function storagePut(url, block = true) {
             console.log(data);
             let contentToStore = {};
             if (data[1].length == 0) {
-                data[1] = await callBackgroundFetch(url);
+                data[1] = await noAPITitleFromUrl(url);
             }
             if (block) {
                 contentToStore[url] = ["block", data[1]];
@@ -214,7 +214,7 @@ async function storagePut(url, block = true) {
         })
         .catch(async () => {
             let contentToStore = {}
-            const title = await callBackgroundFetch(url);
+            const title = await noAPITitleFromUrl(url);
             console.log("put as new video: " + title);
             contentToStore[url] = [`${block ? "block" : "allow"}`, title]
             console.log(contentToStore);
