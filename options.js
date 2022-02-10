@@ -311,7 +311,6 @@ function clearHtmlList(list) {
                 promiseArray.push(browser.storage.local.remove(Object.keys(data)[i]));
             }
             Promise.allSettled(promiseArray).then(updateHtml);
-
         })
     });
 
