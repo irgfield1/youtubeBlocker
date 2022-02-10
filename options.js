@@ -20,6 +20,9 @@ async function fillHtml() {
                     if (Object.keys(data)[i] == "radio") {
                         continue;
                     }
+                    else if (Object.keys(data)[i] == "resource") {
+                        continue;
+                    }
                     let myUrl = Object.values(data)[i][1] + " : " + Object.values(data)[i][0];
                     var li = document.createElement("li");
                     li.appendChild(document.createTextNode(myUrl));
@@ -63,6 +66,9 @@ function fillHtmlChecks() {
 
                 for (let i = 0; i < Object.keys(data).length; i++) {
                     if (Object.keys(data)[i] == "radio") {
+                        continue;
+                    }
+                    else if (Object.keys(data)[i] == "resource") {
                         continue;
                     }
                     const html = `<input type="checkbox" id="youtubeURL${i}" class="checks" ${Object.values(data)[i][0] == "allow" ? "checked" : ""
@@ -171,7 +177,6 @@ async function noAPITitleFromUrl(url) {
 
 //url that matches youtubeVideoPattern and a block status
 async function storagePut(url, block = true) {
-    console.log("storagePut");
     await readLocalStorage(url)
         .then(async (data) => {
             console.log(data);
@@ -227,6 +232,9 @@ async function blockmodeInit(value) {
             let contentToStore = {};
             for (let i = 0; i < Object.keys(data).length; i++) {
                 if (Object.keys(data)[i] == "radio") {
+                    continue;
+                }
+                else if (Object.keys(data)[i] == "resource") {
                     continue;
                 }
                 contentToStore[Object.keys(data)[i]] = [value.toLowerCase(), Object.values(data)[i][1]];
