@@ -1,13 +1,16 @@
+// TODO: Optimize storage by only saving video IDs
+// TODO: Accept youtube short urls...
+// Look into adding OAuth to chromeCompat branch
+
 function fillHtml() {
-    // Get title : Tags : Urls from storage
-    // Make list out of them
-    // Make it great!
+    let list = document.getElementById("divWeb");
+    while (list.firstChild) {
+        list.removeChild(list.firstChild);
+    }
     readLocalStorage("resource").then((data) => {
         for (let i = 0; i < data.length; i++) {
             addList(data[i].url, data[i].title, data[i].tags);
         }
-    }).catch(() => {
-        console.log("Nothing here");
     })
 
 }
@@ -38,6 +41,7 @@ function addApplyButton(myUrl) {
         console.log(e.target);
         console.log(e.target.id.slice(3));
         let resourceUrl = e.target.id.slice(3)
+        clearVideos();
         let result = {};
         if (typeof resourceUrl == "undefined" || resourceUrl.length < 1) {
             result = await interpret();
@@ -65,6 +69,19 @@ function addApplyButton(myUrl) {
         Promise.allSettled(promiseArray);
     })
     return btn;
+}
+
+async function clearVideos() {
+    await browser.storage.local.get().then((data) => {
+        let promiseArray = [];
+        for (let i = 0; i < Object.keys(data).length; i++) {
+            if (Object.keys(data)[i] == "radio" || Object.keys(data)[i] == "resource") {
+                continue;
+            }
+            promiseArray.push(browser.storage.local.remove(Object.keys(data)[i]));
+        }
+        Promise.allSettled(promiseArray).then(updateHtml);
+    })
 }
 
 async function storeResource(address, resourceObj) {
@@ -149,7 +166,7 @@ async function noAPITitleFromUrl(url) {
 }
 const readLocalStorage = async (key) => {
     return new Promise((resolve, reject) => {
-        browser.storage.local.get(key).then(function (result) {
+        browser.storage.local.get(key, function (result) {
             if (result[key] === undefined) {
                 reject();
             } else {
@@ -162,6 +179,9 @@ const readLocalStorage = async (key) => {
 let resourceUrl = "";
 const resourceFetchInputField = document.getElementById("resourceFetch");
 const addResourceButton = document.getElementById("strLoadBtn");
+const clearLibraryBtn = document.getElementById("rscStrClearBtn");
+const clearAllStorageBtn = document.getElementById("allStrClearBtn");
+
 console.log(addResourceButton);
 resourceFetchInputField.addEventListener("change", (e) => {
     resourceUrl = e.target.value;
@@ -190,5 +210,15 @@ addResourceButton.addEventListener("click", async () => {
     // }
     // Promise.allSettled(promiseArray);
 });
+clearLibraryBtn.addEventListener("click", async () => {
+    await browser.storage.local.remove("resource");
+    fillHtml();
+})
+clearAllStorageBtn.addEventListener("click", () => {
+    if (confirm("Do you want to completly empty your storage?")) {
+        browser.storage.local.clear();
+        fillHtml();
+    }
+})
 
 fillHtml();
