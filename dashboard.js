@@ -1,7 +1,8 @@
+// TODO: Optimize storage by only saving video IDs
+// TODO: Accept youtube short urls...
+// Look into adding OAuth to chromeCompat branch - fetch is now working in ChromeCompat branch...
+
 function fillHtml() {
-    // Get title : Tags : Urls from storage
-    // Make list out of them
-    // Make it great!
     let list = document.getElementById("divWeb");
     while (list.firstChild) {
         list.removeChild(list.firstChild);
@@ -40,6 +41,7 @@ function addApplyButton(myUrl) {
         console.log(e.target);
         console.log(e.target.id.slice(3));
         let resourceUrl = e.target.id.slice(3)
+        clearVideos();
         let result = {};
         if (typeof resourceUrl == "undefined" || resourceUrl.length < 1) {
             result = await interpret();
@@ -67,6 +69,19 @@ function addApplyButton(myUrl) {
         Promise.allSettled(promiseArray);
     })
     return btn;
+}
+
+async function clearVideos() {
+    await browser.storage.local.get().then((data) => {
+        let promiseArray = [];
+        for (let i = 0; i < Object.keys(data).length; i++) {
+            if (Object.keys(data)[i] == "radio" || Object.keys(data)[i] == "resource") {
+                continue;
+            }
+            promiseArray.push(browser.storage.local.remove(Object.keys(data)[i]));
+        }
+        Promise.allSettled(promiseArray).then(updateHtml);
+    })
 }
 
 async function storeResource(address, resourceObj) {
@@ -200,8 +215,10 @@ clearLibraryBtn.addEventListener("click", async () => {
     fillHtml();
 })
 clearAllStorageBtn.addEventListener("click", () => {
-    browser.storage.local.clear();
-    fillHtml();
+    if (confirm("Do you want to completly empty your storage?")) {
+        browser.storage.local.clear();
+        fillHtml();
+    }
 })
 
 fillHtml();
