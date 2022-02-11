@@ -12,11 +12,19 @@ async function interpret(textAsset = "assets/blockfolder/data.txt") {
     for (let i = 0; i < Object.keys(content).length; i++) {
         if (Object.keys(content)[i].toLowerCase() == "allow") {
             for (let j = 0; j < Object.values(content)[i].length; j++) {
-                contentToStore[Object.values(content)[i][j]] = "allow";
+                // console.log(Object.values(content)[i][j]);
+                let url = trimYoutubeUrl(Object.values(content)[i][j]);
+                console.log(url);
+                contentToStore[url] = "allow";
+                // contentToStore[Object.values(content)[i][j]] = "block";
             }
         } else if (Object.keys(content)[i].toLowerCase() == "block") {
             for (let j = 0; j < Object.values(content)[i].length; j++) {
-                contentToStore[Object.values(content)[i][j]] = "block";
+                // console.log(Object.values(content)[i][j]);
+                let url = trimYoutubeUrl(Object.values(content)[i][j]);
+                console.log(url);
+                contentToStore[url] = "block";
+                // contentToStore[Object.values(content)[i][j]] = "block";
             }
         } else if (Object.keys(content)[i].toLowerCase() == "title") {
             console.log(Object.values(content)[i]);
@@ -24,12 +32,37 @@ async function interpret(textAsset = "assets/blockfolder/data.txt") {
         } else if (Object.keys(content)[i].toLowerCase() == "tags") {
             contentToStore.tags = Object.values(content)[i];
         } else {
+            console.log("Invalid JSON key in key : value pair");
             continue;
         }
     }
     console.log(contentToStore);
 
     return contentToStore;
+}
+
+function trimYoutubeUrl(url) {
+    console.log(url);
+    let trimUrl;
+    if (youtubeVideoPattern.test(url)) {
+        trimUrl = url.slice(url.search("v="))
+    } else if (url.length == 11) {
+        trimUrl = "v=" + url;
+    } else if (url.length == 13) {
+        trimUrl = url;
+    } else if (url.length > 13) {
+        console.log(`${url} is too long, should be "v=" and the next 11 chars`);
+        return "Fail"
+    } else if (url.length < 11 || url.length == 12) {
+        console.log(`${url} is too short, should be "v=" and the next 11 chars`);
+        return "Fail";
+    }
+    if (new RegExp(/[~`!#$%\^&*+=\[\]\\';,/{}|\\":<>\?]/g).test(trimUrl.slice(2))) {
+        return "Fail"
+    } else {
+        console.log(trimUrl);
+        return trimUrl
+    }
 }
 
 function arrayify(myString) {

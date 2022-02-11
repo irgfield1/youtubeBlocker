@@ -15,7 +15,7 @@ function coverGreen() {
         blockDiv.id = "coverGreen";
         blockDiv.style.cssText += "position: absolute;width: 100%;height: 100%;background: green;text-align:center;vertical-align:middle;z-index: 99999;";
         let header = document.createElement('h1');
-        header.innerText = "Blocked";
+        header.innerText = document.title + " is blocked";
         blockDiv.prepend(header);
         videoContainer.prepend(blockDiv);
     }, 1000)
@@ -23,8 +23,10 @@ function coverGreen() {
 
 function uncoverGreen() {
     let blockDiv = document.getElementById("coverGreen");
-    console.log(blockDiv);
-    blockDiv.remove();
+    if (blockDiv != null) {
+        console.log(blockDiv);
+        blockDiv.remove();
+    }
 }
 
 /*

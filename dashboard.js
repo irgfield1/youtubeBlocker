@@ -1,7 +1,7 @@
-// TODO: Optimize storage by only saving video IDs
-// TODO: Accept youtube short urls...
+// TODO: Optimize storage by only saving video IDs <- WIP
+// TODO: Accept youtube short urls... "youtu.be/***"
 // Look into adding OAuth to chromeCompat branch - fetch is now working in ChromeCompat branch...
-
+let youtubeString = "https://www.youtube.com/watch?"
 function fillHtml() {
     let list = document.getElementById("divWeb");
     while (list.firstChild) {
@@ -36,39 +36,35 @@ function addApplyButton(myUrl) {
     btn.classList.add("btn");
     btn.classList.add("btn-outline-info");
     btn.textContent = "Apply Resource";
-    btn.addEventListener("click", async (e) => {
-        console.log("Apply Resource");
-        console.log(e.target);
-        console.log(e.target.id.slice(3));
-        let resourceUrl = e.target.id.slice(3)
-        clearVideos();
-        let result = {};
-        if (typeof resourceUrl == "undefined" || resourceUrl.length < 1) {
-            result = await interpret();
-        } else {
-            result = await interpret(resourceUrl);
-        }
-        console.log(result);
-
-        let promiseArray = [];
-        let blockNum, allowNum;
-        for (let i = 0; i < Object.keys(result).length; i++) {
-            if (Object.values(result)[i] == "allow") {
-                promiseArray.push(storagePut(Object.keys(result)[i], false));
-                allowNum++;
-            } else {
-                promiseArray.push(storagePut(Object.keys(result)[i], true));
-                blockNum++;
-            }
-        }
-        if (allowNum == 0 || blockNum == 0) {
-            allowNum != 0 ? browser.storage.local.set({ "radio": "whitelist" }) : browser.storage.local.set({ "radio": "blacklist" })
-        } else {
-            browser.storage.local.set({ "radio": "split" });
-        }
-        Promise.allSettled(promiseArray);
-    })
+    btn.addEventListener("click", applyResourceListener)
     return btn;
+}
+
+async function applyResourceListener(e) {
+    // console.log("Apply Resource");
+    // console.log(e.target);
+    // console.log(e.target.id.slice(3));
+    let resourceUrl = e.target.id.slice(3)
+    clearVideos();
+    let result = {};
+    if (typeof resourceUrl == "undefined" || resourceUrl.length < 1) {
+        result = await interpret();
+    } else {
+        result = await interpret(resourceUrl);
+    }
+    console.log(result);
+
+    clearVideos();
+    let promiseArray = []
+    for (let i = 0; i < Object.keys(result).length; i++) {
+        if (Object.values(result)[i] == "allow") {
+            promiseArray.push(storagePut(Object.keys(result)[i], false));
+        } else if (Object.values(result)[i] == "block") {
+            promiseArray.push(storagePut(Object.keys(result)[i], true));
+        }
+    }
+    Promise.allSettled(promiseArray);
+
 }
 
 async function clearVideos() {
@@ -80,7 +76,7 @@ async function clearVideos() {
             }
             promiseArray.push(browser.storage.local.remove(Object.keys(data)[i]));
         }
-        Promise.allSettled(promiseArray).then(updateHtml);
+        Promise.allSettled(promiseArray).then(browser.storage.local.get().then(data => console.log(data)));
     })
 }
 
@@ -88,7 +84,6 @@ async function storeResource(address, resourceObj) {
     await readLocalStorage("resource")
         .then(data => {
             console.log(data);
-            console.log(Array.isArray(data));
             if (Array.isArray(data)) {
                 console.log("Is Array");
                 let storageObj = {};
@@ -119,7 +114,8 @@ async function storeResource(address, resourceObj) {
 }
 
 async function storagePut(url, block = true) {
-    await readLocalStorage(url)
+    // console.log("storagePut" + url);
+    return await readLocalStorage(url)
         .then(async (data) => {
             console.log(data);
             let contentToStore = {};
@@ -132,22 +128,25 @@ async function storagePut(url, block = true) {
                 contentToStore[url] = ["allow", data[1]];
             }
             console.log(contentToStore);
-            browser.storage.local.set(contentToStore);
+            await browser.storage.local.set(contentToStore);
+            return true;
         })
         .catch(async () => {
+            console.log("StoragePut.catch");
             let contentToStore = {}
             const title = await noAPITitleFromUrl(url);
             console.log("put as new video: " + title);
             contentToStore[url] = [`${block ? "block" : "allow"}`, title]
             console.log(contentToStore);
-            browser.storage.local.set(contentToStore);
+            await browser.storage.local.set(contentToStore);
+            return true;
         })
 }
 /* @param pattern matching url */
 async function noAPITitleFromUrl(url) {
-    console.log("noAPITitleFromUrl");
+    // console.log("noAPITitleFromUrl");
     let title = "";
-    var response = await fetch(url);
+    var response = await fetch(youtubeString + url);
     switch (response.status) {
         // status "OK"
         case 200:
@@ -164,6 +163,7 @@ async function noAPITitleFromUrl(url) {
             return `"${url}" is not a valid video`;
     }
 }
+
 const readLocalStorage = async (key) => {
     return new Promise((resolve, reject) => {
         browser.storage.local.get(key, function (result) {
@@ -175,6 +175,29 @@ const readLocalStorage = async (key) => {
         });
     });
 };
+
+function trimYoutubeUrl(url) {
+    console.log(url);
+    let trimUrl;
+    if (youtubeVideoPattern.test(url)) {
+        trimUrl = url.slice(url.search("v="))
+    } else if (url.length == 11) {
+        trimUrl = "v=" + url;
+    } else if (url.length == 13) {
+        trimUrl = url;
+    } else if (url.length > 13) {
+        console.log(`${url} is too long, should be "v=" and the next 11 chars`);
+        return "Fail"
+    } else if (url.length < 11 || url.length == 12) {
+        console.log(`${url} is too short, should be "v=" and the next 11 chars`);
+        return "Fail";
+    }
+    if (new RegExp(/[~`!#$%\^&*+=\[\]\\';,/{}|\\":<>\?]/g).test(trimUrl.slice(2))) {
+        return "Fail"
+    } else {
+        return trimUrl
+    }
+}
 
 let resourceUrl = "";
 const resourceFetchInputField = document.getElementById("resourceFetch");

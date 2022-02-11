@@ -2,6 +2,7 @@
 
 let pattern =
     /(http(s)??\:\/\/)?(www\.)?((youtube\.com\/watch\?v=)|(youtu.be\/))([a-zA-Z0-9\-_])+/;
+let youtubeString = "https://www.youtube.com/watch?"
 let radioStatus;
 
 ///////////////////////////////////////////////
@@ -23,7 +24,7 @@ async function fillHtml() {
                     else if (Object.keys(data)[i] == "resource") {
                         continue;
                     }
-                    let myUrl = Object.values(data)[i][1] + " : " + Object.values(data)[i][0];
+                    let myUrl = Object.values(data)[i][1] == null ? youtubeString + Object.keys(data)[i] : Object.values(data)[i][1] + " : " + Object.values(data)[i][0];
                     var li = document.createElement("li");
                     li.appendChild(document.createTextNode(myUrl));
                     myList.appendChild(li);
@@ -73,7 +74,7 @@ function fillHtmlChecks() {
                     }
                     const html = `<input type="checkbox" id="youtubeURL${i}" class="checks" ${Object.values(data)[i][0] == "allow" ? "checked" : ""
                         } name="url${i}" value="${Object.keys(data)[i]}">
-                         <label for="youtubeURL${i}" id="checkboxLabel${i}"> ${Object.values(data)[i][1]
+                         <label for="youtubeURL${i}" id="checkboxLabel${i}"> ${Object.values(data)[i][1] == null ? youtubeString + Object.keys(data)[i] : Object.values(data)[i][1]
                         } : ${Object.values(data)[i][0]}</label>
                          <button id="copyBtn${i}" type="button" class="btn btn-outline-info">Copy</button>
                          <button id="clearBtn${i}" type="button" class="btn btn-outline-danger" align="right">Delete</button><br>`;
@@ -89,6 +90,7 @@ function fillHtmlChecks() {
                         let contentToStore = {};
                         let urlBlockStatus = document.querySelector(`#youtubeURL${i}`)
                             .checked ? "allow" : "block";
+                        console.log(Object.keys(data)[i]);
                         contentToStore[Object.keys(data)[i]] = [urlBlockStatus, Object.values(data)[i][1]];
 
                         browser.storage.local.set(contentToStore);
@@ -110,7 +112,8 @@ function fillHtmlChecks() {
                         .getElementById(`copyBtn${i}`)
                         .addEventListener("click", async () => {
                             let checkboxBOI = document.getElementById(`youtubeURL${i}`);
-                            navigator.clipboard.writeText(checkboxBOI.value);
+                            console.log(youtubeString + checkboxBOI.value);
+                            navigator.clipboard.writeText(youtubeString + checkboxBOI.value);
                         });
                 }
             }
@@ -157,6 +160,9 @@ function updateHtml() {
 async function noAPITitleFromUrl(url) {
     console.log("noAPITitleFromUrl");
     let title = "";
+    if (url.length == 13) {
+        url = youtubeString + url;
+    }
     var response = await fetch(url);
     switch (response.status) {
         // status "OK"
@@ -250,11 +256,31 @@ async function blockmodeInit(value) {
 /***************Utility Functions**********/
 //block button handler for first textbox
 async function writeBlockToBrowser(url, text) {
-    if (pattern.test(url)) {
-        await storagePut(url, text.toLowerCase() == "block" ? true : false)
-        updateHtml();
+    console.log("WriteBlockToBrowser");
+    if (trimYoutubeUrl(url) != "Fail") {
+        await storagePut(trimYoutubeUrl(url), text.toLowerCase() == "block" ? true : false)
+    }
+}
+function trimYoutubeUrl(url) {
+    console.log(url);
+    let trimUrl;
+    if (youtubeVideoPattern.test(url)) {
+        trimUrl = url.slice(url.search("v="))
+    } else if (url.length == 11) {
+        trimUrl = "v=" + url;
+    } else if (url.length == 13) {
+        trimUrl = url;
+    } else if (url.length > 13) {
+        console.log(`${url} is too long, should be "v=" and the next 11 chars`);
+        return "Fail"
+    } else if (url.length < 11 || url.length == 12) {
+        console.log(`${url} is too short, should be "v=" and the next 11 chars`);
+        return "Fail";
+    }
+    if (new RegExp(/[~`!#$%\^&*+=\[\]\\';,/{}|\\":<>\?]/g).test(trimUrl.slice(2))) {
+        return "Fail"
     } else {
-        console.log(url + " not youtube");
+        return trimUrl
     }
 }
 
@@ -276,6 +302,14 @@ function clearHtmlList(list) {
     }
 }
 
+function handleIDsPut() {
+    let id = (url.slice(url.search("v=") + 2, url.search("v=") + 13));
+
+}
+function handleIDsPop() {
+
+}
+
 //Executable code
 (() => {
     /**
@@ -291,7 +325,7 @@ function clearHtmlList(list) {
     const addResourceButton = document.getElementById("strLoadBtn");
     const radios = document.getElementById("proxy_style_form");
 
-    blockButton.addEventListener("click", () => {
+    blockButton.addEventListener("click", (e) => {
         if (youtubeUrl) {
             writeBlockToBrowser(youtubeUrl, blockButton.textContent);
         }

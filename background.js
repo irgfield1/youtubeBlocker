@@ -1,5 +1,6 @@
 let youtubeVideoPattern =
     /(http(s)??\:\/\/)?(www\.)?((youtube\.com\/watch\?v=)|(youtu.be\/))([a-zA-Z0-9\-_])+/;
+let youtubeString = "https://www.youtube.com/watch?"
 let radioStatus;
 let currentTabBlock = false;
 
@@ -10,26 +11,17 @@ function write2Browser() {
         return;
     }
     browser.tabs.query({ active: true }).then(async (tabs) => {
-        let tempUrl = tabs[0].url.slice();
-        if (youtubeVideoPattern.test(tempUrl)) {
-            readLocalStorage(tempUrl)
-                .catch(() => (storagePut(tempUrl, false)));
+        if (youtubeVideoPattern.test(tabs[0].url.slice())) {
+            let tempUrl = trimYoutubeUrl(tabs[0].url.slice());
+
+            if (tempUrl != "Fail") {
+                readLocalStorage(tempUrl)
+                    .catch(() => (storagePut(tempUrl, false)));
+            }
         }
     });
 }
 
-// Key helper function
-const readLocalStorage = async (key) => {
-    return new Promise((resolve, reject) => {
-        browser.storage.local.get(key, function (result) {
-            if (result[key] === undefined) {
-                reject();
-            } else {
-                resolve(result[key]);
-            }
-        });
-    });
-};
 
 // Updates radioStatus within this file
 function radioChangeListener(changes, area) {
@@ -40,26 +32,31 @@ function radioChangeListener(changes, area) {
 
 async function setTabBlock() {
     await browser.tabs.query({ active: true }).then(async (tabs) => {
-        let tempUrl = tabs[0].url.slice();
-        await readLocalStorage(tempUrl).then(
-            (data) => {
-                console.log(data);
-                //found in storage
-                currentTabBlock = data[0] == "allow" ? false : true;
-            },
-            async () => {
-                //not found in storage
-                if (typeof radioStatus == "undefined") {
-                    radioStatus = (await readLocalStorage("radio")).toLowerCase();
+        if (youtubeVideoPattern.test(tabs[0].url.slice())) {
+            let tempUrl = trimYoutubeUrl(tabs[0].url.slice());
+            console.log(tabs[0].url.slice());
+            console.log(tempUrl);
+            await readLocalStorage(tempUrl).then(
+                (data) => {
+                    console.log(data);
+                    //found in storage
+                    currentTabBlock = data[0] == "allow" ? false : true;
+                },
+                async () => {
+                    //not found in storage
+                    if (typeof radioStatus == "undefined") {
+                        radioStatus = (await readLocalStorage("radio")).toLowerCase();
+                    }
+                    if (radioStatus == "blacklist") {
+                        currentTabBlock = false;
+                    } else if (radioStatus == "whitelist") {
+                        currentTabBlock = true
+                    }
                 }
-                if (radioStatus == "blacklist") {
-                    currentTabBlock = false;
-                } else if (radioStatus == "whitelist") {
-                    currentTabBlock = true
-                }
-            }
-        );
-    });
+            );
+        }
+    })
+        .catch(err => console.error(err));
 }
 
 
@@ -79,31 +76,32 @@ function handleProxyRequest(requestInfo) {
 
 function greenTab() {
     browser.tabs.query({ active: true }).then(async (tabs) => {
-        let tempUrl = tabs[0].url.slice();
-        let tab = tabs[0];
-        console.log(tempUrl);
-        await readLocalStorage(tempUrl).then(async (data) => {
-            //Success case
-            if (data[0] == "block") {
-                console.log("coverGreen");
-                browser.tabs.sendMessage(tab.id, { cover: true });
-                // coverGreen();
-            } else if (data[0] == "allow") {
-                console.log("This video should play");
-                browser.tabs.sendMessage(tab.id, { cover: false })
-            }
-        },
-            (errInfo) => {
-                //failure case
-                if (radioStatus == "blacklist") {
-                    console.log("This video should play");
-                    browser.tabs.sendMessage(tab.id, { cover: false });
-                } else if (radioStatus == "whitelist") {
+        if (youtubeVideoPattern.test(tabs[0].url.slice())) {
+            let tempUrl = trimYoutubeUrl(tabs[0].url.slice())
+            let tab = tabs[0];
+            await readLocalStorage(tempUrl).then(async (data) => {
+                //Success case
+                if (data[0] == "block") {
                     console.log("coverGreen");
-                    browser.tabs.sendMessage(tab.id, { cover: true })
+                    browser.tabs.sendMessage(tab.id, { cover: true });
                     // coverGreen();
+                } else if (data[0] == "allow") {
+                    console.log("This video should play");
+                    browser.tabs.sendMessage(tab.id, { cover: false })
                 }
-            });
+            },
+                (errInfo) => {
+                    //failure case
+                    if (radioStatus == "blacklist") {
+                        console.log("This video should play");
+                        browser.tabs.sendMessage(tab.id, { cover: false });
+                    } else if (radioStatus == "whitelist") {
+                        console.log("coverGreen");
+                        browser.tabs.sendMessage(tab.id, { cover: true })
+                        // coverGreen();
+                    }
+                });
+        }
     });
 }
 
@@ -133,6 +131,9 @@ function storagePut(url, block = true) {
 async function noAPITitleFromUrl(url) {
     console.log("noAPITitleFromUrl");
     let title = "";
+    if (url.length == 13) {
+        url = youtubeString + url;
+    }
     var response = await fetch(url);
     switch (response.status) {
         // status "OK"
@@ -153,6 +154,7 @@ async function noAPITitleFromUrl(url) {
 
 }
 
+// TODO: get rid of this
 //On Firefox Branch, JUST HERE TO PREVENT "let result = chromeBlocking(info);" from breaking
 function chromeBlocking(requestInfo) {
     //technically we can use promises, I just don't know how
@@ -163,6 +165,44 @@ function chromeBlocking(requestInfo) {
     return { protect: "the child" };
 }
 
+/****************HELPERS ********************/
+
+// Key helper function
+const readLocalStorage = async (key) => {
+    return new Promise((resolve, reject) => {
+        browser.storage.local.get(key, function (result) {
+            if (result[key] === undefined) {
+                reject();
+            } else {
+                resolve(result[key]);
+            }
+        });
+    });
+};
+
+
+function trimYoutubeUrl(url) {
+    console.log(url);
+    let trimUrl;
+    if (youtubeVideoPattern.test(url)) {
+        trimUrl = url.slice(url.search("v="))
+    } else if (url.length == 11) {
+        trimUrl = "v=" + url;
+    } else if (url.length == 13) {
+        trimUrl = url;
+    } else if (url.length > 13) {
+        console.log(`${url} is too long, should be "v=" and the next 11 chars`);
+        return "Fail"
+    } else if (url.length < 11 || url.length == 12) {
+        console.log(`${url} is too short, should be "v=" and the next 11 chars`);
+        return "Fail";
+    }
+    if (new RegExp(/[~`!#$%\^&*+=\[\]\\';,/{}|\\":<>\?]/g).test(trimUrl.slice(2))) {
+        return "Fail"
+    } else {
+        return trimUrl
+    }
+}
 /**************LISTENERS************************/
 
 //document.addEventListener("DOMContentLoaded", listHistory);
