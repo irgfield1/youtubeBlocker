@@ -15,11 +15,11 @@
  - PostBtn button should change text
    - Block -> Allow in whitelist, Allow -> Block for split and blacklist
  - Blacklist should block all currently listed videos
- - If on a video, refresh should block current video
- - A new video should be allowed
+   - In Blacklist videos not in the list should be allowed
+   - If on a video, and you switch from blacklist to whitelist, refresh should block current video
  - Whitelist should allow all currently listed videos
- - Refresh should allow current video
- - A new video should be blocked
+   - A new video should be blocked
+   - If on a video, and you switch from whitelist to blacklist, refresh should allow current video
 4. **Library, Add Resource, Add url from blockbox**
  - Click Add Resource with nothing in box should load the assets/blockfolder/data.txt urls
  - Clear storage erases storage and all fields in bullet mode and checkbox mode

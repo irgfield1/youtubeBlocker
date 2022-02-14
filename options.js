@@ -58,67 +58,43 @@ function radioInit() {
 
 //creates checkbox for each map entry, checkboxes toggle block status
 function fillHtmlChecks() {
-    browser.storage.local
-        .get(null)
+    browser.storage.local.get()
         .then((data) => {
-            if (typeof data != "undefined") {
+            if (data != undefined && data != null) {
+                console.log(data);
                 let myList = document.querySelector(".blockable_url_list");
                 clearHtmlList(myList);
-
                 for (let i = 0; i < Object.keys(data).length; i++) {
                     if (Object.keys(data)[i] == "radio") {
                         continue;
-                    }
-                    else if (Object.keys(data)[i] == "resource") {
+                    } else if (Object.keys(data)[i] == "resource") {
                         continue;
-                    }
-                    const html = `<input type="checkbox" id="youtubeURL${i}" class="checks" ${Object.values(data)[i][0] == "allow" ? "checked" : ""
-                        } name="url${i}" value="${Object.keys(data)[i]}">
-                         <label for="youtubeURL${i}" id="checkboxLabel${i}"> ${Object.values(data)[i][1] == null ? youtubeString + Object.keys(data)[i] : Object.values(data)[i][1]
-                        } : ${Object.values(data)[i][0]}</label>
+                    } else {
+                        //formHTML
+                        const html =
+                            `<input type="checkbox" id="youtubeURL${i}" class="checks" ${Object.values(data)[i][0] == "allow" ? "checked" : ""} name="url${i}" value="${Object.keys(data)[i]}">
+                         <label for="youtubeURL${i}" id="checkboxLabel${i}"> ${Object.values(data)[i][1] == null ? youtubeString + Object.keys(data)[i] : Object.values(data)[i][1]} : ${Object.values(data)[i][0]}</label>
                          <button id="copyBtn${i}" type="button" class="btn btn-outline-info">Copy</button>
                          <button id="clearBtn${i}" type="button" class="btn btn-outline-danger" align="right">Delete</button><br>`;
 
-                    myList.innerHTML += html;
+                        myList.innerHTML += html;
+                        //Add handler
+                        addChecksHandlers(Object.keys(data)[i], Object.values(data)[i], i);
+                    }
                 }
-                let checklist = document.querySelectorAll(".checks");
-
-                // Event listener for checkbox toggle
-                for (let i = 0; i < checklist.length; i++) {
-                    checklist[i].addEventListener("input", async () => {
-                        // let myList = document.querySelector(".blockable_url_list");
-                        let contentToStore = {};
-                        let urlBlockStatus = document.querySelector(`#youtubeURL${i}`)
-                            .checked ? "allow" : "block";
-                        console.log(Object.keys(data)[i]);
-                        contentToStore[Object.keys(data)[i]] = [urlBlockStatus, Object.values(data)[i][1]];
-
-                        browser.storage.local.set(contentToStore);
-                        document.getElementById(`checkboxLabel${i}`).innerHTML = `${Object.values(data)[i][1]
-                            } : ${urlBlockStatus}`;
-                    });
-                }
-
-                //Add delete and click button functionality
-                for (let i = 0; i < checklist.length; i++) {
-                    document
-                        .getElementById(`clearBtn${i}`)
-                        .addEventListener("click", async () => {
-                            let checkboxBOI = document.getElementById(`youtubeURL${i}`);
-                            await browser.storage.local.remove(checkboxBOI.value);
-                            fillHtmlChecks();
-                        });
-                    document
-                        .getElementById(`copyBtn${i}`)
-                        .addEventListener("click", async () => {
-                            let checkboxBOI = document.getElementById(`youtubeURL${i}`);
-                            console.log(youtubeString + checkboxBOI.value);
-                            navigator.clipboard.writeText(youtubeString + checkboxBOI.value);
-                        });
-                }
+            } else {
+                console.log("empty storage");
             }
         })
-        .catch((err) => console.error(err));
+
+        .catch(err => {
+            if (err != null) {
+                console.error(err);
+            } else {
+                console.log("Da error wit no message!!!");
+            }
+        })
+
 }
 
 // Checkboxes toggle with list
@@ -210,6 +186,31 @@ async function storagePut(url, block = true) {
 
 //////////////////////////////////////////////
 /*******************Handlers*****************/
+function addChecksHandlers(title, data, i) {
+    document.getElementById(`youtubeURL${i}`).addEventListener("input", async () => {
+        let contentToStore = {};
+        let urlBlockStatus = document.querySelector(`#youtubeURL${i}`)
+            .checked ? "allow" : "block";
+        console.log(title);
+        contentToStore[title] = [urlBlockStatus, data[1]];
+
+        browser.storage.local.set(contentToStore);
+        document.getElementById(`checkboxLabel${i}`).innerHTML = `${data[1]} : ${urlBlockStatus}`;
+    });
+    document.getElementById(`clearBtn${i}`).addEventListener("click", async (e) => {
+        console.log(e.target);
+        let checkboxBOI = document.getElementById(`youtubeURL${i}`);
+        await browser.storage.local.remove(checkboxBOI.value);
+        fillHtmlChecks();
+    });
+    document.getElementById(`copyBtn${i}`).addEventListener("click", async (e) => {
+        console.log(e.target);
+        let checkboxBOI = document.getElementById(`youtubeURL${i}`);
+        console.log(youtubeString + checkboxBOI.value);
+        navigator.clipboard.writeText(youtubeString + checkboxBOI.value);
+    });
+}
+
 //switches radio button status in storage.local
 async function radioButtonHandler(e) {
     e.preventDefault();

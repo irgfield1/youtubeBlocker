@@ -22,11 +22,13 @@ function coverGreen() {
 }
 
 function uncoverGreen() {
-    let blockDiv = document.getElementById("coverGreen");
-    if (blockDiv != null) {
-        console.log(blockDiv);
-        blockDiv.remove();
-    }
+    setTimeout(() => {
+        let blockDiv = document.getElementById("coverGreen");
+        if (blockDiv != null) {
+            console.log(blockDiv);
+            blockDiv.remove();
+        }
+    }, 1000);
 }
 
 /*
