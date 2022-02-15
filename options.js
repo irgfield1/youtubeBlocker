@@ -2,6 +2,7 @@
 
 let pattern =
     /(http(s)??\:\/\/)?(www\.)?((youtube\.com\/watch\?v=)|(youtu.be\/))([a-zA-Z0-9\-_])+/;
+let youtubeString = "https://www.youtube.com/watch?";
 let radioStatus;
 
 ///////////////////////////////////////////////
@@ -60,67 +61,70 @@ function radioInit() {
 
 //creates checkbox for each map entry, checkboxes toggle block status
 function fillHtmlChecks() {
-    browser.storage.local
-        .get(null)
+    browser.storage.local.get()
         .then((data) => {
-            if (typeof data != "undefined") {
+            if (data != undefined && data != null) {
+                console.log(data);
                 let myList = document.querySelector(".blockable_url_list");
                 clearHtmlList(myList);
-
                 for (let i = 0; i < Object.keys(data).length; i++) {
-                    if (Object.keys(data)[i] == "radio") {
+                    if (Object.keys(data)[i] == "radio" || Object.keys(data)[i] == "resource") {
                         continue;
+                    } else {
+                        makeCheckboxHtml(myList, data, i)
+                        addCheckboxHandlers(Object.values(data)[i], i);
                     }
-                    const html = `<input type="checkbox" id="youtubeURL${i}" class="checks" ${Object.values(data)[i][0] == "allow" ? "checked" : ""
-                        } name="url${i}" value="${Object.keys(data)[i]}">
-                         <label for="youtubeURL${i}" id="checkboxLabel${i}"> ${Object.values(data)[i][1] != null ? Object.values(data)[i][1] : Object.keys(data)[i]
-                        } : ${Object.values(data)[i][0]}</label>
-                         <button id="copyBtn${i}" type="button" class="btn btn-outline-info">Copy</button>
-                         <button id="clearBtn${i}" type="button" class="btn btn-outline-danger" align="right">Delete</button><br>`;
-
-                    myList.innerHTML += html;
                 }
-                let checklist = document.querySelectorAll(".checks");
-
-                // Event listener for checkbox toggle
-                for (let i = 0; i < checklist.length; i++) {
-                    checklist[i].addEventListener("input", async () => {
-                        let myList = document.querySelector(".blockable_url_list");
-                        let contentToStore = {};
-                        let title = (await browser.storage.local.get(Object.keys(data)[i]))[1];
-                        console.log(title);
-
-                        let urlBlockStatus = document.querySelector(`#youtubeURL${i}`)
-                            .checked ? "allow" : "block";
-                        contentToStore[Object.keys(data)[i]] = [urlBlockStatus, title];
-                        console.log(contentToStore);
-                        browser.storage.local.set(contentToStore);
-                        document.getElementById(`checkboxLabel${i}`).innerHTML = `${Object.values(data)[i][1] != null ? Object.values(data)[i][1] : Object.keys(data)[i]
-                            } : ${urlBlockStatus}`;
-                    });
-                }
-
-                //Add delete and click button functionality
-                for (let i = 0; i < checklist.length; i++) {
-                    document
-                        .getElementById(`clearBtn${i}`)
-                        .addEventListener("click", async () => {
-                            let checkboxBOI = document.getElementById(`youtubeURL${i}`);
-                            await browser.storage.local.remove(checkboxBOI.value);
-                            fillHtmlChecks();
-                        });
-                    document
-                        .getElementById(`copyBtn${i}`)
-                        .addEventListener("click", async () => {
-                            let checkboxBOI = document.getElementById(`youtubeURL${i}`);
-                            navigator.clipboard.writeText(checkboxBOI.value);
-                        });
-                }
+            } else {
+                console.log("empty storage");
             }
         })
-        .catch((err) => console.error(err));
+        .catch(err => {
+            err != null ? console.error(err) : console.log("Unknown Error");
+        })
 }
 
+function addCheckboxHandlers(data, i) {
+    //Checkbox
+    document.getElementById(`youtubeURL${i}`).addEventListener("input", (e) => {
+        let contentToStore = {};
+        let urlBlockStatus = e.target.checked ? "allow" : "block";
+        document.getElementById(`checkboxLabel${i}`).innerHTML = `${data[1]} : ${urlBlockStatus}`;
+
+        browser.storage.local.get(e.target.value).then(data => {
+            console.log(data[e.target.value][1]);
+            contentToStore[e.target.value] = [urlBlockStatus, data[e.target.value][1]];
+            browser.storage.local.set(contentToStore);
+        })
+
+    });
+    //Buttons
+    document.getElementById(`clearBtn${i}`).addEventListener("click", async (e) => {
+        let checkboxBOI = document.getElementById(`youtubeURL${i}`);
+        await browser.storage.local.remove(checkboxBOI.value);
+        fillHtmlChecks();
+    });
+
+    document.getElementById(`copyBtn${i}`).addEventListener("click", async (e) => {
+        navigator.clipboard.writeText(/*youtubeString + */e.target.value);
+    });
+}
+
+function makeCheckboxHtml(insertNode, data, i) {
+    let checkbox = document.createElement("input");
+    let label = document.createElement("label");
+    let copyBtn = document.createElement("button");
+    let clearBtn = document.createElement("button");
+    checkbox.type = "checkbox"; checkbox.id = `youtubeURL${i}`; checkbox.classList.add("checks");
+    checkbox.checked = Object.values(data)[i][0] == "allow"; checkbox.value = Object.keys(data)[i];
+    label.textContent = `${Object.values(data)[i][1] == null ? youtubeString + Object.keys(data)[i] : Object.values(data)[i][1]} : ${Object.values(data)[i][0]}`;
+    label.htmlFor = `youtubeURL${i}`; label.id = `checkboxLabel${i}`;
+    copyBtn.id = `copyBtn${i}`; copyBtn.type = "button"; copyBtn.classList.add("btn", "btn-outline-info");
+    copyBtn.textContent = "Copy"; copyBtn.value = Object.keys(data)[i];
+    clearBtn.id = `clearBtn${i}`; clearBtn.type = "button"; clearBtn.classList.add("btn", "btn-outline-danger");
+    clearBtn.textContent = "Delete"; clearBtn.value = Object.keys(data)[i];
+    insertNode.append(checkbox, label, copyBtn, clearBtn, document.createElement("br"));
+}
 // Checkboxes toggle with list
 function toggleChecksDisplay() {
     fillHtml();
