@@ -190,7 +190,7 @@ async function noAPITitleFromUrl(url) {
 }
 const readLocalStorage = async (key) => {
     return new Promise((resolve, reject) => {
-        browser.storage.local.get(key, function (result) {
+        browser.storage.local.get(key).then(function (result) {
             if (result[key] === undefined) {
                 reject();
             } else {
