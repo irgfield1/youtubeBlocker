@@ -70,26 +70,17 @@ function fillHtmlChecks() {
                     } else if (Object.keys(data)[i] == "resource") {
                         continue;
                     } else {
-                        //formHTML
                         makeCheckboxHtml(myList, data, i)
-
                         addCheckboxHandlers(Object.values(data)[i], i);
-
                     }
                 }
             } else {
                 console.log("empty storage");
             }
         })
-
         .catch(err => {
-            if (err != null) {
-                console.error(err);
-            } else {
-                console.log("Da error wit no message!!!");
-            }
+            err != null ? console.error(err) : console.log("Unknown Error");
         })
-
 }
 
 // Checkboxes toggle with list

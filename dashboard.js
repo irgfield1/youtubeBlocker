@@ -1,7 +1,5 @@
-// TODO: Optimize storage by only saving video IDs <- WIP
-// TODO: Accept youtube short urls... "youtu.be/***"
-// Look into adding OAuth to chromeCompat branch - fetch is now working in ChromeCompat branch...
-let youtubeString = "https://www.youtube.com/watch?"
+// Look into adding OAuth to chromeCompat branch
+
 function fillHtml() {
     let list = document.getElementById("divWeb");
     while (list.firstChild) {
@@ -77,6 +75,19 @@ async function clearVideos() {
             promiseArray.push(browser.storage.local.remove(Object.keys(data)[i]));
         }
         Promise.allSettled(promiseArray).then(browser.storage.local.get().then(data => console.log(data)));
+    })
+}
+
+async function clearVideos() {
+    await browser.storage.local.get().then((data) => {
+        let promiseArray = [];
+        for (let i = 0; i < Object.keys(data).length; i++) {
+            if (Object.keys(data)[i] == "radio" || Object.keys(data)[i] == "resource") {
+                continue;
+            }
+            promiseArray.push(browser.storage.local.remove(Object.keys(data)[i]));
+        }
+        Promise.allSettled(promiseArray).then(updateHtml);
     })
 }
 
