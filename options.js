@@ -71,15 +71,10 @@ function fillHtmlChecks() {
                         continue;
                     } else {
                         //formHTML
-                        const html =
-                            `<input type="checkbox" id="youtubeURL${i}" class="checks" ${Object.values(data)[i][0] == "allow" ? "checked" : ""} name="url${i}" value="${Object.keys(data)[i]}">
-                         <label for="youtubeURL${i}" id="checkboxLabel${i}"> ${Object.values(data)[i][1] == null ? youtubeString + Object.keys(data)[i] : Object.values(data)[i][1]} : ${Object.values(data)[i][0]}</label>
-                         <button id="copyBtn${i}" type="button" class="btn btn-outline-info">Copy</button>
-                         <button id="clearBtn${i}" type="button" class="btn btn-outline-danger" align="right">Delete</button><br>`;
+                        makeCheckboxHtml(myList, data, i)
 
-                        myList.innerHTML += html;
-                        //Add handler
-                        addChecksHandlers(Object.keys(data)[i], Object.values(data)[i], i);
+                        addCheckboxHandlers(Object.values(data)[i], i);
+
                     }
                 }
             } else {
@@ -99,8 +94,6 @@ function fillHtmlChecks() {
 
 // Checkboxes toggle with list
 function toggleChecksDisplay() {
-    fillHtml();
-    fillHtmlChecks();
     let bulletList = document.getElementById("history");
     let checksList = document.getElementById("checks");
     let button = document.getElementById("checksBtn");
@@ -114,6 +107,7 @@ function toggleChecksDisplay() {
         checksList.classList.remove("hidden");
         button.textContent = "Bullets Style";
     }
+    updateHtml();
 }
 
 // updates HTML (from storage) and hides whichever was hidden before... probably could load only whichever is currently displayed...
@@ -186,29 +180,46 @@ async function storagePut(url, block = true) {
 
 //////////////////////////////////////////////
 /*******************Handlers*****************/
-function addChecksHandlers(title, data, i) {
-    document.getElementById(`youtubeURL${i}`).addEventListener("input", async () => {
+function addCheckboxHandlers(data, i) {
+    //Checkbox
+    document.getElementById(`youtubeURL${i}`).addEventListener("input", (e) => {
         let contentToStore = {};
-        let urlBlockStatus = document.querySelector(`#youtubeURL${i}`)
-            .checked ? "allow" : "block";
-        console.log(title);
-        contentToStore[title] = [urlBlockStatus, data[1]];
-
-        browser.storage.local.set(contentToStore);
+        let urlBlockStatus = e.target.checked ? "allow" : "block";
         document.getElementById(`checkboxLabel${i}`).innerHTML = `${data[1]} : ${urlBlockStatus}`;
+
+        browser.storage.local.get(e.target.value).then(data => {
+            console.log(data[e.target.value][1]);
+            contentToStore[e.target.value] = [urlBlockStatus, data[e.target.value][1]];
+            browser.storage.local.set(contentToStore);
+        })
+
     });
+    //Buttons
     document.getElementById(`clearBtn${i}`).addEventListener("click", async (e) => {
-        console.log(e.target);
         let checkboxBOI = document.getElementById(`youtubeURL${i}`);
         await browser.storage.local.remove(checkboxBOI.value);
         fillHtmlChecks();
     });
+
     document.getElementById(`copyBtn${i}`).addEventListener("click", async (e) => {
-        console.log(e.target);
-        let checkboxBOI = document.getElementById(`youtubeURL${i}`);
-        console.log(youtubeString + checkboxBOI.value);
-        navigator.clipboard.writeText(youtubeString + checkboxBOI.value);
+        navigator.clipboard.writeText(youtubeString + e.target.value);
     });
+}
+
+function makeCheckboxHtml(insertNode, data, i) {
+    let checkbox = document.createElement("input");
+    let label = document.createElement("label");
+    let copyBtn = document.createElement("button");
+    let clearBtn = document.createElement("button");
+    checkbox.type = "checkbox"; checkbox.id = `youtubeURL${i}`; checkbox.classList.add("checks");
+    checkbox.checked = Object.values(data)[i][0] == "allow"; checkbox.value = Object.keys(data)[i];
+    label.textContent = `${Object.values(data)[i][1] == null ? youtubeString + Object.keys(data)[i] : Object.values(data)[i][1]} : ${Object.values(data)[i][0]}`;
+    label.htmlFor = `youtubeURL${i}`; label.id = `checkboxLabel${i}`;
+    copyBtn.id = `copyBtn${i}`; copyBtn.type = "button"; copyBtn.classList.add("btn", "btn-outline-info");
+    copyBtn.textContent = "Copy"; copyBtn.value = Object.keys(data)[i];
+    clearBtn.id = `clearBtn${i}`; clearBtn.type = "button"; clearBtn.classList.add("btn", "btn-outline-danger");
+    clearBtn.textContent = "Delete"; clearBtn.value = Object.keys(data)[i];
+    insertNode.append(checkbox, label, copyBtn, clearBtn, document.createElement("br"));
 }
 
 //switches radio button status in storage.local
@@ -260,6 +271,7 @@ async function writeBlockToBrowser(url, text) {
     console.log("WriteBlockToBrowser");
     if (trimYoutubeUrl(url) != "Fail") {
         await storagePut(trimYoutubeUrl(url), text.toLowerCase() == "block" ? true : false)
+        updateHtml();
     }
 }
 function trimYoutubeUrl(url) {
@@ -377,3 +389,4 @@ function handleIDsPop() {
 })();
 
 //https://www.geeksforgeeks.org/how-to-add-a-custom-right-click-menu-to-a-webpage/ - Remove and copy?
+
