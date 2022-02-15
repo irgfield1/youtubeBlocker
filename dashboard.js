@@ -1,6 +1,7 @@
 // TODO: Optimize storage by only saving video IDs
 // TODO: Accept youtube short urls...
 // Look into adding OAuth to chromeCompat branch
+let youtubeString = "https://www.youtube.com/watch?";
 
 function fillHtml() {
     let list = document.getElementById("divWeb");
@@ -50,21 +51,14 @@ function addApplyButton(myUrl) {
         }
         console.log(result);
 
-        let promiseArray = [];
-        let blockNum, allowNum;
+        clearVideos();
+        let promiseArray = []
         for (let i = 0; i < Object.keys(result).length; i++) {
             if (Object.values(result)[i] == "allow") {
-                promiseArray.push(storagePut(Object.keys(result)[i], false));
-                allowNum++;
-            } else {
-                promiseArray.push(storagePut(Object.keys(result)[i], true));
-                blockNum++;
+                promiseArray.push(storagePut(trimYoutubeUrl(Object.keys(result)[i]), false));
+            } else if (Object.values(result)[i] == "block") {
+                promiseArray.push(storagePut(trimYoutubeUrl(Object.keys(result)[i]), true));
             }
-        }
-        if (allowNum == 0 || blockNum == 0) {
-            allowNum != 0 ? browser.storage.local.set({ "radio": "whitelist" }) : browser.storage.local.set({ "radio": "blacklist" })
-        } else {
-            browser.storage.local.set({ "radio": "split" });
         }
         Promise.allSettled(promiseArray);
     })
@@ -80,7 +74,7 @@ async function clearVideos() {
             }
             promiseArray.push(browser.storage.local.remove(Object.keys(data)[i]));
         }
-        Promise.allSettled(promiseArray).then(updateHtml);
+        Promise.allSettled(promiseArray);
     })
 }
 
@@ -118,13 +112,39 @@ async function storeResource(address, resourceObj) {
 
 }
 
+function trimYoutubeUrl(url) {
+    console.log(url);
+    let trimUrl;
+    if (youtubeVideoPattern.test(url)) {
+        trimUrl = url.slice(url.search("v="))
+    } else if (url.length == 11) {
+        trimUrl = "v=" + url;
+    } else if (url.length == 13) {
+        trimUrl = url;
+    } else if (url.length > 13) {
+        console.log(`${url} is too long, should be "v=" and the next 11 chars`);
+        return "Fail"
+    } else if (url.length < 11 || url.length == 12) {
+        console.log(`${url} is too short, should be "v=" and the next 11 chars`);
+        return "Fail";
+    }
+    if (new RegExp(/[~`!#$%\^&*+=\[\]\\';,/{}|\\":<>\?]/g).test(trimUrl.slice(2))) {
+        return "Fail"
+    } else {
+        return trimUrl
+    }
+}
+
+
 async function storagePut(url, block = true) {
     await readLocalStorage(url)
         .then(async (data) => {
             console.log(data);
+            console.log("In storage");
             let contentToStore = {};
             if (data[1].length == 0) {
                 data[1] = await noAPITitleFromUrl(url);
+                console.log(data[1]);
             }
             if (block) {
                 contentToStore[url] = ["block", data[1]];
@@ -135,6 +155,7 @@ async function storagePut(url, block = true) {
             browser.storage.local.set(contentToStore);
         })
         .catch(async () => {
+            console.log("Not in storage");
             let contentToStore = {}
             const title = await noAPITitleFromUrl(url);
             console.log("put as new video: " + title);
@@ -145,9 +166,12 @@ async function storagePut(url, block = true) {
 }
 /* @param pattern matching url */
 async function noAPITitleFromUrl(url) {
-    console.log("noAPITitleFromUrl");
+    console.log("noAPITitleFromUrl : ");
+    console.log(youtubeString);
+    console.log(url);
     let title = "";
-    var response = await fetch(url);
+    var response = await fetch(youtubeString + url);
+    console.log("response");
     switch (response.status) {
         // status "OK"
         case 200:

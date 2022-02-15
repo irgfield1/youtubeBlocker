@@ -15,8 +15,8 @@ async function write2Browser() {
     browser.tabs.query({ active: true }).then(async (tabs) => {
         let tempUrl = tabs[0].url.slice();
         if (youtubeVideoPattern.test(tempUrl)) {
-            readLocalStorage(tempUrl)
-                .catch(() => (storagePut(tempUrl, false)));
+            readLocalStorage(trimYoutubeUrl(tempUrl))
+                .catch(() => (storagePut(trimYoutubeUrl(tempUrl), false)));
         }
     });
 }
@@ -27,7 +27,10 @@ function greenTab() {
         let tempUrl = tabs[0].url.slice();
         let tab = tabs[0];
         console.log(tempUrl);
-        await readLocalStorage(tempUrl).then(async (data) => {
+        if (trimYoutubeUrl(tempUrl) == "Fail") {
+            return;
+        }
+        await readLocalStorage(trimYoutubeUrl(tempUrl)).then(async (data) => {
             //Success case
             console.log(data);
             if (data[0] == "block") {
@@ -73,7 +76,8 @@ async function blockCheck() {
     console.log(tab);
     if (youtubeVideoPattern.test(tab.url)) {
         console.log("Matches regex");
-        await readLocalStorage(tab.url).then(
+
+        await readLocalStorage(trimYoutubeUrl(tab.url)).then(
             (data) => {
                 console.log(data); //block/allow
                 //base rule
@@ -98,6 +102,29 @@ async function blockCheck() {
     }
 }
 /**************HELPERS**************************/
+
+function trimYoutubeUrl(url) {
+    console.log(url);
+    let trimUrl;
+    if (youtubeVideoPattern.test(url)) {
+        trimUrl = url.slice(url.search("v="))
+    } else if (url.length == 11) {
+        trimUrl = "v=" + url;
+    } else if (url.length == 13) {
+        trimUrl = url;
+    } else if (url.length > 13) {
+        console.log(`${url} is too long, should be "v=" and the next 11 chars`);
+        return "Fail"
+    } else if (url.length < 11 || url.length == 12) {
+        console.log(`${url} is too short, should be "v=" and the next 11 chars`);
+        return "Fail";
+    }
+    if (new RegExp(/[~`!#$%\^&*+=\[\]\\';,/{}|\\":<>\?]/g).test(trimUrl.slice(2))) {
+        return "Fail"
+    } else {
+        return trimUrl
+    }
+}
 
 // Redefines browser.storage.local.get
 const readLocalStorage = async (key) => {

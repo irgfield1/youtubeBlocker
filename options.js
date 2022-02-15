@@ -16,15 +16,15 @@ async function fillHtml() {
             if (typeof data != "undefined") {
                 let myList = document.getElementById("history");
                 clearHtmlList(myList);
-                console.log(Object.values(data));
+                console.log(data);
                 for (let i = 0; i < Object.keys(data).length; i++) {
-                    if (Object.keys(data)[i] == "radio") {
+                    if (Object.keys(data)[i] == "radio" || Object.keys(data)[i] == "resource") {
                         continue;
                     }
                     let myUrl;
                     // typeof null == 'object'
                     if (Object.values(data)[i][1] == null) {
-                        myUrl = Object.keys(data)[i] + " : " + Object.values(data)[i][0];
+                        myUrl = youtubeString + Object.keys(data)[i] + " : " + Object.values(data)[i][0];
                     } else {
                         myUrl = Object.values(data)[i][1] + " : " + Object.values(data)[i][0];
                     }
@@ -106,7 +106,7 @@ function addCheckboxHandlers(data, i) {
     });
 
     document.getElementById(`copyBtn${i}`).addEventListener("click", async (e) => {
-        navigator.clipboard.writeText(/*youtubeString + */e.target.value);
+        navigator.clipboard.writeText(youtubeString + e.target.value);
     });
 }
 
@@ -164,7 +164,7 @@ function updateHtml() {
 async function noAPITitleFromUrl(url) {
     console.log("noAPITitleFromUrl");
     let title = "";
-    var response = await fetch(url);
+    var response = await fetch(youtubeString + url);
     switch (response.status) {
         // status "OK"
         case 200:
@@ -272,9 +272,13 @@ async function blockmodeInit(value) {
 //block button handler for first textbox
 async function writeBlockToBrowser(url, text) {
     if (pattern.test(url)) {
-        await storagePut(url, text.toLowerCase() == "block" ? true : false)
+        await storagePut(trimYoutubeUrl(url), text.toLowerCase() == "block" ? true : false)
         updateHtml();
     } else {
+        if (trimYoutubeUrl(url) != "Fail") {
+            await storagePut(trimYoutubeUrl(url), text.toLowerCase() == "block" ? true : false);
+            updateHtml();
+        }
         console.log(url + " not youtube");
     }
 }
@@ -296,6 +300,30 @@ function clearHtmlList(list) {
         list.removeChild(list.firstChild);
     }
 }
+
+function trimYoutubeUrl(url) {
+    console.log(url);
+    let trimUrl;
+    if (youtubeVideoPattern.test(url)) {
+        trimUrl = url.slice(url.search("v="))
+    } else if (url.length == 11) {
+        trimUrl = "v=" + url;
+    } else if (url.length == 13) {
+        trimUrl = url;
+    } else if (url.length > 13) {
+        console.log(`${url} is too long, should be "v=" and the next 11 chars`);
+        return "Fail"
+    } else if (url.length < 11 || url.length == 12) {
+        console.log(`${url} is too short, should be "v=" and the next 11 chars`);
+        return "Fail";
+    }
+    if (new RegExp(/[~`!#$%\^&*+=\[\]\\';,/{}|\\":<>\?]/g).test(trimUrl.slice(2))) {
+        return "Fail"
+    } else {
+        return trimUrl
+    }
+}
+
 
 //Executable code
 (() => {
@@ -340,9 +368,9 @@ function clearHtmlList(list) {
         let promiseArray = [];
         for (let i = 0; i < Object.keys(result).length; i++) {
             if (Object.values(result)[i] == "allow") {
-                promiseArray.push(storagePut(Object.keys(result)[i], false));
+                promiseArray.push(storagePut(trimYoutubeUrl(Object.keys(result)[i]), false));
             } else {
-                promiseArray.push(storagePut(Object.keys(result)[i], true));
+                promiseArray.push(storagePut(trimYoutubeUrl(Object.keys(result)[i]), true));
             }
         }
         Promise.allSettled(promiseArray).then(updateHtml);
