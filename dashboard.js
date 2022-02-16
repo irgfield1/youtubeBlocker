@@ -1,19 +1,83 @@
 // Look into adding OAuth to chromeCompat branch
 
 function fillHtml() {
-    let list = document.getElementById("divWeb");
-    while (list.firstChild) {
-        list.removeChild(list.firstChild);
+    let listLocal = document.getElementById("divLocal");
+    while (listLocal.firstChild) {
+        listLocal.removeChild(listLocal.firstChild)
+    }
+    browser.storage.local.get().then(data => {
+        for (let i = 0; i < Object.keys(data).length; i++) {
+            if (Object.keys(data)[i].includes("v=")) {
+                continue;
+            } else if (Object.keys(data)[i] == "radio" || Object.keys(data)[i] == "resource") {
+                continue;
+            } else {
+                //Covers addWebList(), addApplyButton(), applyResourceListener();
+                let title = Object.keys(data)[i];
+                let editDiv = document.getElementById("divLocal");
+                let htmlText = title;
+                console.log(htmlText);
+                var li = document.createElement("li");
+                li.appendChild(document.createTextNode(htmlText));
+                li.id = "local" + title;
+                // li.title = tags.toString();
+                // let btn = addApplyButton(thisUrl)
+                var btn = document.createElement("button");
+                btn.id = "btn" + title;
+                btn.classList.add("btn");
+                btn.classList.add("btn-outline-info");
+                btn.textContent = "Apply Resource";
+                btn.addEventListener("click", (e) => {
+                    console.log(e.target.id);
+                    let key = e.target.id.slice(3);
+                    console.log("Get from storage");
+                    clearVideos();
+                    browser.storage.local.get(key).then(async resData => {
+                        console.log(resData);
+                        console.log(resData[key]);
+                        if (resData[key].allow != null) {
+                            for (let i = 0; i < resData[key].allow.length; i++) {
+                                let contentToStore = {};
+                                contentToStore[resData[key].allow[i][0]] = resData[key].allow[i][1];
+                                console.log(contentToStore);
+                                await browser.storage.local.set(contentToStore);
+                            }
+                        }
+                        if (resData[key].block != null) {
+                            for (let i = 0; i < resData[key].block.length; i++) {
+                                let contentToStore = {};
+                                contentToStore[resData[key].block[i][0]] = resData[key].block[i][1];
+                                console.log(contentToStore);
+                                await browser.storage.local.set(contentToStore)
+                            }
+                        }
+                    })
+                })
+                // if (document.getElementById(thisUrl) == null) {
+                editDiv.appendChild(li);
+                editDiv.appendChild(btn);
+                // }
+
+
+            }
+        }
+    })
+
+    let listWeb = document.getElementById("divWeb");
+    while (listWeb.firstChild) {
+        listWeb.removeChild(listWeb.firstChild);
     }
     readLocalStorage("resource").then((data) => {
         for (let i = 0; i < data.length; i++) {
-            addList(data[i].url, data[i].title, data[i].tags);
+            addWebList(data[i].url, data[i].title, data[i].tags);
         }
     })
 
 }
 
-function addList(thisUrl, title, tags) {
+
+
+function addWebList(thisUrl, title, tags) {
     let editDiv = document.getElementById("divWeb");
     let htmlText = title + " : " + thisUrl;
     console.log(htmlText);
@@ -82,12 +146,10 @@ async function clearVideos() {
     await browser.storage.local.get().then((data) => {
         let promiseArray = [];
         for (let i = 0; i < Object.keys(data).length; i++) {
-            if (Object.keys(data)[i] == "radio" || Object.keys(data)[i] == "resource") {
-                continue;
-            }
-            promiseArray.push(browser.storage.local.remove(Object.keys(data)[i]));
+            if (Object.keys(data)[i].includes("v="))
+                promiseArray.push(browser.storage.local.remove(Object.keys(data)[i]));
         }
-        Promise.allSettled(promiseArray).then(updateHtml);
+        Promise.allSettled(promiseArray);
     })
 }
 
@@ -232,7 +294,7 @@ addResourceButton.addEventListener("click", async () => {
     console.log(result);
     if (result?.title != null) {
         storeResource(resourceUrl, result);
-        addList(resourceUrl, result.title, result.tags);
+        addWebList(resourceUrl, result.title, result.tags);
     }
     // let promiseArray = [];
     // for (let i = 0; i < Object.keys(result).length; i++) {

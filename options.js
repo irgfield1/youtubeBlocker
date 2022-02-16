@@ -18,16 +18,12 @@ async function fillHtml() {
                 clearHtmlList(myList);
 
                 for (let i = 0; i < Object.keys(data).length; i++) {
-                    if (Object.keys(data)[i] == "radio") {
-                        continue;
+                    if (Object.keys(data)[i].includes("v=")) {
+                        let myUrl = Object.values(data)[i][1] == null ? youtubeString + Object.keys(data)[i] : Object.values(data)[i][1] + " : " + Object.values(data)[i][0];
+                        var li = document.createElement("li");
+                        li.appendChild(document.createTextNode(myUrl));
+                        myList.appendChild(li);
                     }
-                    else if (Object.keys(data)[i] == "resource") {
-                        continue;
-                    }
-                    let myUrl = Object.values(data)[i][1] == null ? youtubeString + Object.keys(data)[i] : Object.values(data)[i][1] + " : " + Object.values(data)[i][0];
-                    var li = document.createElement("li");
-                    li.appendChild(document.createTextNode(myUrl));
-                    myList.appendChild(li);
                 }
             } else {
                 let myList = document.getElementById("history");
@@ -65,14 +61,11 @@ function fillHtmlChecks() {
                 let myList = document.querySelector(".blockable_url_list");
                 clearHtmlList(myList);
                 for (let i = 0; i < Object.keys(data).length; i++) {
-                    if (Object.keys(data)[i] == "radio") {
-                        continue;
-                    } else if (Object.keys(data)[i] == "resource") {
-                        continue;
-                    } else {
+                    if (Object.keys(data)[i].includes("v=")) {
                         makeCheckboxHtml(myList, data, i)
                         addCheckboxHandlers(Object.values(data)[i], i);
                     }
+
                 }
             } else {
                 console.log("empty storage");
@@ -240,13 +233,10 @@ async function blockmodeInit(value) {
         .then((data) => {
             let contentToStore = {};
             for (let i = 0; i < Object.keys(data).length; i++) {
-                if (Object.keys(data)[i] == "radio") {
-                    continue;
+                if (Object.keys(data)[i].includes("v=")) {
+
+                    contentToStore[Object.keys(data)[i]] = [value.toLowerCase(), Object.values(data)[i][1]];
                 }
-                else if (Object.keys(data)[i] == "resource") {
-                    continue;
-                }
-                contentToStore[Object.keys(data)[i]] = [value.toLowerCase(), Object.values(data)[i][1]];
             }
             return contentToStore;
         })
@@ -342,26 +332,28 @@ function handleIDsPop() {
     checkToggleButton.addEventListener("click", toggleChecksDisplay);
     exportListButton.addEventListener("click", () => {
         browser.storage.local.get().then(data => {
+            console.log(Object.entries(data));
             let title = prompt("What title do you want to put on this array?")
             let contentToStore = {};
             contentToStore[title] = {};
             for (let i = 0; i < Object.keys(data).length; i++) {
                 if (Object.keys(data)[i].includes("v=")) {
+                    console.log(Object.entries(data)[i]);
                     if (Object.values(data)[i][0] == "block") {
-                        console.log(data[Object.keys(data)[i]]);
+                        // console.log(data[Object.keys(data)[i]]);
                         if (contentToStore[title]?.block == null) {
                             contentToStore[title].block = []
-                            contentToStore[title].block.push(data[Object.keys(data)[i]]);
+                            contentToStore[title].block.push(Object.entries(data)[i]);
                         } else {
-                            contentToStore[title].block.push(data[Object.keys(data)[i]]);
+                            contentToStore[title].block.push(Object.entries(data)[i]);
                         }
 
                     } else if (Object.values(data)[i][0] == "allow") {
                         if (contentToStore[title]?.allow == null) {
                             contentToStore[title].allow = []
-                            contentToStore[title].allow.push(data[Object.keys(data)[i]]);
+                            contentToStore[title].allow.push(Object.entries(data)[i]);
                         } else {
-                            contentToStore[title].allow.push(data[Object.keys(data)[i]]);
+                            contentToStore[title].allow.push(Object.entries(data)[i]);
                         }
                     }
                     console.log(Object.keys(data)[i]);
@@ -377,10 +369,9 @@ function handleIDsPop() {
         browser.storage.local.get().then((data) => {
             let promiseArray = [];
             for (let i = 0; i < Object.keys(data).length; i++) {
-                if (Object.keys(data)[i] == "radio" || Object.keys(data)[i] == "resource") {
-                    continue;
+                if (Object.keys(data)[i].includes("v=")) {
+                    promiseArray.push(browser.storage.local.remove(Object.keys(data)[i]));
                 }
-                promiseArray.push(browser.storage.local.remove(Object.keys(data)[i]));
             }
             Promise.allSettled(promiseArray).then(updateHtml);
         })
