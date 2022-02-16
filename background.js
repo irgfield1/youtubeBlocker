@@ -61,17 +61,58 @@ async function setTabBlock() {
 
 
 function handleProxyRequest(requestInfo) {
+    console.log(requestInfo);
+    blockSideTab(requestInfo);
     return new Promise((resolve, reject) => {
         if (!requestInfo.url.includes("googlevideo")) {
             resolve({ type: "direct" });
         }
-        console.log(`currentTabBlock ${currentTabBlock}`);
-        if (currentTabBlock) {
-            resolve({ type: "http", host: "127.0.0.1", port: 65535 })
+
+        if (fromCurrentTab(requestInfo)) {
+            console.log(`currentTabBlock ${currentTabBlock}`);
+            if (currentTabBlock) {
+                resolve({ type: "http", host: "127.0.0.1", port: 65535 })
+            } else {
+                resolve({ type: "direct" })
+            }
         } else {
-            resolve({ type: "direct" })
+            if (blockSideTab(requestInfo)) {
+                resolve({ type: "http", host: "127.0.0.1", port: 65535 });
+            } else {
+                resolve({ type: "direct" });
+            }
         }
+
+        // evaluate request from separate tab -- blockSideTab()
     });
+}
+async function fromCurrentTab(requestInfo) {
+    return browser.tabs.query({ active: true }).then(data => {
+        return (data[0]?.id) == (requestInfo?.tabId);
+    })
+}
+
+// True if block
+async function blockSideTab(requestInfo) {
+    if (requestInfo?.tabId > 0) {
+        return await browser.tabs.get(requestInfo?.tabId).then(async tab => {
+            return await readLocalStorage(trimYoutubeUrl(tab?.url)).then((data) => {
+                //found in storage
+                return data[0] == "allow";
+            }, async (err) => {
+                console.error(err)
+                if (typeof radioStatus == "undefined") {
+                    radioStatus = (await readLocalStorage("radio")).toLowerCase();
+                }
+                if (radioStatus == "blacklist") {
+                    return false;
+                } else if (radioStatus == "whitelist") {
+                    return true
+                }
+            }
+            )
+        }).catch(err => console.error(err))
+    }
 }
 
 function greenTab() {
@@ -182,7 +223,6 @@ const readLocalStorage = async (key) => {
 
 
 function trimYoutubeUrl(url) {
-    console.log(url);
     let trimUrl;
     if (youtubeVideoPattern.test(url)) {
         trimUrl = url.slice(url.search("v="))
@@ -268,5 +308,7 @@ if (navigator.userAgent.indexOf("Chrome") != -1) {
 //Lol he says working with an extension is painful
 //Allow you to work on it without the browser extension
 
-//Name
-//Folder based blocking
+// Track all tabs and urls - It's invasive I know, but idk how else to do it
+// Listen on all requests (already happening)
+// Get request source tab & url
+// 

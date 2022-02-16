@@ -45,8 +45,6 @@ This is ugly, but it works....
 
 - Bootstrap will not stay on one line on chrome
 - No youtube api thus block channel functionality...
-- If you navigate away from the tab, the video plays in the background...
-- Copy button didn't work once because document couldn't find by ID
 
 ## Confusion
 
@@ -61,10 +59,10 @@ This is ugly, but it works....
 - [x] Button to save url to clipboard
 - [x] Have URL and video name - background function that has webpage access
       complex query selector -> Done with youtube data api
-- Notify blocked by overlay on youtube video
-- Move remove url and copy to a right click menu
+- [x] Notify blocked by overlay on youtube video (in normal view)
+- Move remove url and copy to a right click menu....
 
-\* This behavior is whitelist mode
+\* Or do something else, we don't care
 
 ## Contact
 
