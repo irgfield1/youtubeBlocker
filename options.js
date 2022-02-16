@@ -324,6 +324,7 @@ function handleIDsPop() {
     const blockButton = document.getElementById("postBtn");
     const blockUrlInputField = document.getElementById("blockUrl");
     const checkToggleButton = document.getElementById("checksBtn");
+    const exportListButton = document.getElementById("exportBtn");
     const clearStorageButton = document.getElementById("strClearBtn");
     const resourceFetchInputField = document.getElementById("resourceFetch");
     const addResourceButton = document.getElementById("strLoadBtn");
@@ -339,6 +340,39 @@ function handleIDsPop() {
     });
 
     checkToggleButton.addEventListener("click", toggleChecksDisplay);
+    exportListButton.addEventListener("click", () => {
+        browser.storage.local.get().then(data => {
+            let title = prompt("What title do you want to put on this array?")
+            let contentToStore = {};
+            contentToStore[title] = {};
+            for (let i = 0; i < Object.keys(data).length; i++) {
+                if (Object.keys(data)[i].includes("v=")) {
+                    if (Object.values(data)[i][0] == "block") {
+                        console.log(data[Object.keys(data)[i]]);
+                        if (contentToStore[title]?.block == null) {
+                            contentToStore[title].block = []
+                            contentToStore[title].block.push(data[Object.keys(data)[i]]);
+                        } else {
+                            contentToStore[title].block.push(data[Object.keys(data)[i]]);
+                        }
+
+                    } else if (Object.values(data)[i][0] == "allow") {
+                        if (contentToStore[title]?.allow == null) {
+                            contentToStore[title].allow = []
+                            contentToStore[title].allow.push(data[Object.keys(data)[i]]);
+                        } else {
+                            contentToStore[title].allow.push(data[Object.keys(data)[i]]);
+                        }
+                    }
+                    console.log(Object.keys(data)[i]);
+                } else {
+                    console.log(`${Object.keys(data)[i]} is not a video id`);
+                }
+            }
+            console.log(contentToStore[title]);
+            browser.storage.local.set(contentToStore);
+        })
+    })
     clearStorageButton.addEventListener("click", async () => {
         browser.storage.local.get().then((data) => {
             let promiseArray = [];
