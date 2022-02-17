@@ -13,53 +13,8 @@ function fillHtml() {
             } else if (Object.keys(data)[i] == "radio" || Object.keys(data)[i] == "resource") {
                 continue;
             } else {
-                //Covers addWebList(), addApplyButton(), applyResourceListener();
-                let title = Object.keys(data)[i];
-                let editDiv = document.getElementById("divLocal");
-                let htmlText = title;
-                console.log(htmlText);
-                var li = document.createElement("li");
-                li.appendChild(document.createTextNode(htmlText));
-                li.id = "local" + title;
-                // li.title = tags.toString();
-                // let btn = addApplyButton(thisUrl)
-                var btn = document.createElement("button");
-                btn.id = "btn" + title;
-                btn.classList.add("btn");
-                btn.classList.add("btn-outline-info");
-                btn.textContent = "Apply Resource";
-                btn.addEventListener("click", (e) => {
-                    console.log(e.target.id);
-                    let key = e.target.id.slice(3);
-                    console.log("Get from storage");
-                    clearVideos();
-                    browser.storage.local.get(key).then(async resData => {
-                        console.log(resData);
-                        console.log(resData[key]);
-                        if (resData[key].allow != null) {
-                            for (let i = 0; i < resData[key].allow.length; i++) {
-                                let contentToStore = {};
-                                contentToStore[resData[key].allow[i][0]] = resData[key].allow[i][1];
-                                console.log(contentToStore);
-                                await browser.storage.local.set(contentToStore);
-                            }
-                        }
-                        if (resData[key].block != null) {
-                            for (let i = 0; i < resData[key].block.length; i++) {
-                                let contentToStore = {};
-                                contentToStore[resData[key].block[i][0]] = resData[key].block[i][1];
-                                console.log(contentToStore);
-                                await browser.storage.local.set(contentToStore)
-                            }
-                        }
-                    })
-                })
-                // if (document.getElementById(thisUrl) == null) {
-                editDiv.appendChild(li);
-                editDiv.appendChild(btn);
-                // }
-
-
+                let bundle = ({ title: Object.keys(data)[i], url: null, tags: ["local"] })
+                addList2(bundle, "divLocal", localButtonHandler);
             }
         }
     })
@@ -70,45 +25,65 @@ function fillHtml() {
     }
     readLocalStorage("resource").then((data) => {
         for (let i = 0; i < data.length; i++) {
-            addWebList(data[i].url, data[i].title, data[i].tags);
+            console.log(data[i]);
+            addList2(data[i], "divWeb", applyResourceListener);
         }
     })
 
 }
 
+function addList2(data, location, listenerFun) {
+    let editDiv = document.getElementById(location);
+    let htmlText = data.title + (data.url != null ? " : " + data.url : "");
 
-
-function addWebList(thisUrl, title, tags) {
-    let editDiv = document.getElementById("divWeb");
-    let htmlText = title + " : " + thisUrl;
-    console.log(htmlText);
     var li = document.createElement("li");
     li.appendChild(document.createTextNode(htmlText));
-    li.id = thisUrl;
-    li.title = tags.toString();
-    let btn = addApplyButton(thisUrl)
-    if (document.getElementById(thisUrl) == null) {
-        editDiv.appendChild(li);
-        editDiv.appendChild(btn);
-    }
-}
+    li.id = location + data.title;
+    li.title = data.tags.toString();
 
-function addApplyButton(myUrl) {
     var btn = document.createElement("button");
-    btn.id = "btn" + myUrl;
+    btn.id = "btn" + location + data.title;
+    btn.value = data.url != null ? data.url : data.title;
     btn.classList.add("btn");
     btn.classList.add("btn-outline-info");
     btn.textContent = "Apply Resource";
-    btn.addEventListener("click", applyResourceListener)
-    return btn;
+    btn.addEventListener("click", listenerFun);
+
+    editDiv.appendChild(li);
+    editDiv.appendChild(btn);
+}
+
+function localButtonHandler(e) {
+    console.log(e.target.id);
+    let key = e.target.value;
+    console.log("key");
+    clearVideos();
+    browser.storage.local.get(key).then(async resData => {
+        console.log(resData);
+        console.log(resData[key]);
+        if (resData[key].allow != null) {
+            for (let i = 0; i < resData[key].allow.length; i++) {
+                let contentToStore = {};
+                contentToStore[resData[key].allow[i][0]] = resData[key].allow[i][1];
+                console.log(contentToStore);
+                await browser.storage.local.set(contentToStore);
+            }
+        }
+        if (resData[key].block != null) {
+            for (let i = 0; i < resData[key].block.length; i++) {
+                let contentToStore = {};
+                contentToStore[resData[key].block[i][0]] = resData[key].block[i][1];
+                console.log(contentToStore);
+                await browser.storage.local.set(contentToStore)
+            }
+        }
+    })
 }
 
 async function applyResourceListener(e) {
-    // console.log("Apply Resource");
-    // console.log(e.target);
-    // console.log(e.target.id.slice(3));
-    let resourceUrl = e.target.id.slice(3)
-    clearVideos();
+    console.log(e.target.id);
+    console.log(e.target.value);
+    let resourceUrl = e.target.value
     let result = {};
     if (typeof resourceUrl == "undefined" || resourceUrl.length < 1) {
         result = await interpret();
@@ -134,19 +109,6 @@ async function clearVideos() {
     await browser.storage.local.get().then((data) => {
         let promiseArray = [];
         for (let i = 0; i < Object.keys(data).length; i++) {
-            if (Object.keys(data)[i] == "radio" || Object.keys(data)[i] == "resource") {
-                continue;
-            }
-            promiseArray.push(browser.storage.local.remove(Object.keys(data)[i]));
-        }
-        Promise.allSettled(promiseArray).then(browser.storage.local.get().then(data => console.log(data)));
-    })
-}
-
-async function clearVideos() {
-    await browser.storage.local.get().then((data) => {
-        let promiseArray = [];
-        for (let i = 0; i < Object.keys(data).length; i++) {
             if (Object.keys(data)[i].includes("v="))
                 promiseArray.push(browser.storage.local.remove(Object.keys(data)[i]));
         }
@@ -157,16 +119,13 @@ async function clearVideos() {
 async function storeResource(address, resourceObj) {
     await readLocalStorage("resource")
         .then(data => {
-            console.log(data);
             if (Array.isArray(data)) {
-                console.log("Is Array");
                 let storageObj = {};
                 storageObj.url = address;
                 storageObj.title = resourceObj.title;
                 storageObj.tags = resourceObj.tags;
-                console.log(storageObj);
                 data.push(storageObj);
-                console.log(data);
+
                 let contentToStore = {};
                 contentToStore.resource = data;
                 browser.storage.local.set(contentToStore);
@@ -188,34 +147,22 @@ async function storeResource(address, resourceObj) {
 }
 
 async function storagePut(url, block = true) {
-    // console.log("storagePut" + url);
-    return await readLocalStorage(url)
+    await readLocalStorage(url)
         .then(async (data) => {
-            console.log(data);
             let contentToStore = {};
-            if (data[1].length == 0) {
-                data[1] = await noAPITitleFromUrl(url);
-            }
-            if (block) {
-                contentToStore[url] = ["block", data[1]];
-            } else {
-                contentToStore[url] = ["allow", data[1]];
-            }
-            console.log(contentToStore);
+            if (data[1].length == 0) data[1] = await noAPITitleFromUrl(url);
+
+            contentToStore[url] = [`${block ? "block" : "allow"}`, data[1]];
             await browser.storage.local.set(contentToStore);
-            return true;
         })
         .catch(async () => {
-            console.log("StoragePut.catch");
             let contentToStore = {}
             const title = await noAPITitleFromUrl(url);
-            console.log("put as new video: " + title);
-            contentToStore[url] = [`${block ? "block" : "allow"}`, title]
-            console.log(contentToStore);
+            contentToStore[url] = [`${block ? "block" : "allow"}`, title];
             await browser.storage.local.set(contentToStore);
-            return true;
         })
 }
+
 /* @param pattern matching url */
 async function noAPITitleFromUrl(url) {
     // console.log("noAPITitleFromUrl");
@@ -225,15 +172,12 @@ async function noAPITitleFromUrl(url) {
         // status "OK"
         case 200:
             let result = await response.blob()
-            console.log(result);
             await result.text().then(text => {
                 title = text.slice(text.indexOf("<title>") + 7, text.indexOf("</title>"));
             });
-            console.log(title);
             return title;
         // status "Not Found"
         case 404:
-            console.log('Not Found');
             return `"${url}" is not a valid video`;
     }
 }
@@ -251,25 +195,20 @@ const readLocalStorage = async (key) => {
 };
 
 function trimYoutubeUrl(url) {
-    console.log(url);
-    let trimUrl;
     if (youtubeVideoPattern.test(url)) {
-        trimUrl = url.slice(url.search("v="))
-    } else if (url.length == 11) {
-        trimUrl = "v=" + url;
-    } else if (url.length == 13) {
-        trimUrl = url;
-    } else if (url.length > 13) {
-        console.log(`${url} is too long, should be "v=" and the next 11 chars`);
-        return "Fail"
-    } else if (url.length < 11 || url.length == 12) {
-        console.log(`${url} is too short, should be "v=" and the next 11 chars`);
-        return "Fail";
-    }
-    if (new RegExp(/[~`!#$%\^&*+=\[\]\\';,/{}|\\":<>\?]/g).test(trimUrl.slice(2))) {
+        return url.slice(url.search("v="))
+    } else if (url.length == 13 && url.includes("v=")) {
+        if (new RegExp(/[~`!#$%\^&*+=\[\]\\';,/{}|\\":<>\?]/g).test(url.slice(2))) {
+            return "Fail"
+        } else {
+            return url
+        }
+    } else if (url.includes("youtube")) {
+        //youtube but not a standalone video
         return "Fail"
     } else {
-        return trimUrl
+        // Not youtube
+        return "Fail";
     }
 }
 
@@ -279,7 +218,6 @@ const addResourceButton = document.getElementById("strLoadBtn");
 const clearLibraryBtn = document.getElementById("rscStrClearBtn");
 const clearAllStorageBtn = document.getElementById("allStrClearBtn");
 
-console.log(addResourceButton);
 resourceFetchInputField.addEventListener("change", (e) => {
     resourceUrl = e.target.value;
 });
@@ -293,29 +231,35 @@ addResourceButton.addEventListener("click", async () => {
         result = await interpret(resourceUrl);
     }
     console.log(result);
-    if (result?.title != null) {
+    if (result?.title != null) {//potential error point, not every json with a title fits scheme
         storeResource(resourceUrl, result);
-        addWebList(resourceUrl, result.title, result.tags);
+        let bundle = ({ url: resourceUrl, title: result.title, tags: result.tags })
+        console.log(bundle);
+        addList2(bundle, "divWeb", applyResourceListener);
     }
-    // let promiseArray = [];
-    // for (let i = 0; i < Object.keys(result).length; i++) {
-    //     if (Object.values(result)[i] == "allow") {
-    //         promiseArray.push(storagePut(Object.keys(result)[i], false));
-    //     } else {
-    //         promiseArray.push(storagePut(Object.keys(result)[i], true));
-    //     }
-    // }
-    // Promise.allSettled(promiseArray);
 });
+
 clearLibraryBtn.addEventListener("click", async () => {
     await browser.storage.local.remove("resource");
+    browser.storage.local.get(null).then(data => {
+        let promiseArray = [];
+        for (let i = 0; i < Object.keys(data).length; i++) {
+            if (Object.keys(data)[i].includes("v=") || Object.keys(data)[i] == "radio") {
+                continue
+            } else {
+                promiseArray.push(browser.storage.local.remove(Object.keys(data)[i]));
+            }
+        }
+        Promise.allSettled(promiseArray);
+    })
     fillHtml();
-})
+});
+
 clearAllStorageBtn.addEventListener("click", () => {
     if (confirm("Do you want to completly empty your storage?")) {
         browser.storage.local.clear();
         fillHtml();
     }
-})
+});
 
 fillHtml();
