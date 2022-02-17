@@ -1,9 +1,74 @@
 // TODO: Optimize storage by only saving video IDs
 // TODO: Accept youtube short urls...
+
+const { browserSettings } = require("webextension-polyfill");
+
 // Look into adding OAuth to chromeCompat branch
 let youtubeString = "https://www.youtube.com/watch?";
 
 function fillHtml() {
+    let listLocal = document.getElementById("divLocal");
+    while (listLocal.firstChild) {
+        listLocal.removeChild(listLocal.firstChild)
+    }
+    browser.storage.local.get().then(data => {
+        for (let i = 0; i < Object.keys(data).length; i++) {
+            if (Object.keys(data)[i].includes("v=")) {
+                continue;
+            } else if (Object.keys(data)[i] == "radio" || Object.keys(data)[i] == "resource") {
+                continue;
+            } else {
+                //Covers addWebList(), addApplyButton(), applyResourceListener();
+                let title = Object.keys(data)[i];
+                let editDiv = document.getElementById("divLocal");
+                let htmlText = title;
+                console.log(htmlText);
+                var li = document.createElement("li");
+                li.appendChild(document.createTextNode(htmlText));
+                li.id = "local" + title;
+                // li.title = tags.toString();
+                // let btn = addApplyButton(thisUrl)
+                var btn = document.createElement("button");
+                btn.id = "btn" + title;
+                btn.classList.add("btn");
+                btn.classList.add("btn-outline-info");
+                btn.textContent = "Apply Resource";
+                btn.addEventListener("click", (e) => {
+                    console.log(e.target.id);
+                    let key = e.target.id.slice(3);
+                    console.log("Get from storage");
+                    clearVideos();
+                    browser.storage.local.get(key).then(async resData => {
+                        console.log(resData);
+                        console.log(resData[key]);
+                        if (resData[key].allow != null) {
+                            for (let i = 0; i < resData[key].allow.length; i++) {
+                                let contentToStore = {};
+                                contentToStore[resData[key].allow[i][0]] = resData[key].allow[i][1];
+                                console.log(contentToStore);
+                                await browser.storage.local.set(contentToStore);
+                            }
+                        }
+                        if (resData[key].block != null) {
+                            for (let i = 0; i < resData[key].block.length; i++) {
+                                let contentToStore = {};
+                                contentToStore[resData[key].block[i][0]] = resData[key].block[i][1];
+                                console.log(contentToStore);
+                                await browser.storage.local.set(contentToStore)
+                            }
+                        }
+                    })
+                })
+                // if (document.getElementById(thisUrl) == null) {
+                editDiv.appendChild(li);
+                editDiv.appendChild(btn);
+                // }
+
+
+            }
+        }
+    })
+
     let list = document.getElementById("divWeb");
     while (list.firstChild) {
         list.removeChild(list.firstChild);
@@ -69,7 +134,7 @@ async function clearVideos() {
     await browser.storage.local.get().then((data) => {
         let promiseArray = [];
         for (let i = 0; i < Object.keys(data).length; i++) {
-            if (Object.keys(data)[i] == "radio" || Object.keys(data)[i] == "resource") {
+            if (!Object.keys(data)[i].includes("v=")) {
                 continue;
             }
             promiseArray.push(browser.storage.local.remove(Object.keys(data)[i]));
@@ -236,6 +301,17 @@ addResourceButton.addEventListener("click", async () => {
 });
 clearLibraryBtn.addEventListener("click", async () => {
     await browser.storage.local.remove("resource");
+    browser.storage.local.get(null).then(data => {
+        let promiseArray = [];
+        for (let i = 0; i < Object.keys(data).length; i++) {
+            if (Object.keys(data)[i].includes("v=") || Object.keys(data)[i] == "radio") {
+                continue
+            } else {
+                promiseArray.push(browser.storage.local.remove(Object.keys(data)[i]));
+            }
+        }
+        Promise.allSettled(promiseArray);
+    })
     fillHtml();
 })
 clearAllStorageBtn.addEventListener("click", () => {
