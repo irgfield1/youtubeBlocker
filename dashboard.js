@@ -1,4 +1,5 @@
 // Look into adding OAuth to chromeCompat branch
+let youtubeString = "https://www.youtube.com/watch?";
 
 function fillHtml() {
     let listLocal = document.getElementById("divLocal");
