@@ -1,8 +1,8 @@
 "use strict";
 
-let pattern =
+const pattern =
     /(http(s)??\:\/\/)?(www\.)?((youtube\.com\/watch\?v=)|(youtu.be\/))([a-zA-Z0-9\-_])+/;
-let youtubeString = "https://www.youtube.com/watch?"
+const youtubeString = "https://www.youtube.com/watch?"
 let radioStatus;
 
 ///////////////////////////////////////////////
@@ -15,8 +15,9 @@ async function fillHtml() {
         .then((data) => {
             if (typeof data != "undefined") {
                 let myList = document.getElementById("history");
-                clearHtmlList(myList);
-
+                while (myList.firstChild) {
+                    myList.removeChild(myList.firstChild);
+                }
                 for (let i = 0; i < Object.keys(data).length; i++) {
                     if (Object.keys(data)[i].includes("v=")) {
                         let myUrl = Object.values(data)[i][1] == null ? youtubeString + Object.keys(data)[i] : Object.values(data)[i][1] + " : " + Object.values(data)[i][0];
@@ -35,49 +36,47 @@ async function fillHtml() {
         .catch((err) => console.error(err));
 }
 
-// Radio button selection persists
-function radioInit() {
-    readLocalStorage("radio")
-        .then((data) => {
-            let value = data.toLowerCase();
-            let myRadio = document.getElementById(value);
-            myRadio.checked = "true";
-            if (myRadio.value.toLowerCase() == "whitelist") {
-                document.getElementById("postBtn").textContent = "Allow";
-            }
-        })
-        .catch(() => {
-            let myRadio = document.getElementById("split");
-            myRadio.checked = true;
-        });
-}
-
 //creates checkbox for each map entry, checkboxes toggle block status
 function fillHtmlChecks() {
-    browser.storage.local.get()
-        .then((data) => {
-            if (data != undefined && data != null) {
-                console.log(data);
-                let myList = document.querySelector(".blockable_url_list");
-                clearHtmlList(myList);
-                for (let i = 0; i < Object.keys(data).length; i++) {
-                    if (Object.keys(data)[i].includes("v=")) {
-                        makeCheckboxHtml(myList, data, i)
-                        addCheckboxHandlers(Object.values(data)[i], i);
-                    }
-
-                }
-            } else {
-                console.log("empty storage");
+    browser.storage.local.get().then((data) => {
+        if (data != undefined && data != null) {
+            let myList = document.querySelector(".blockable_url_list");
+            while (myList.firstChild) {
+                myList.removeChild(myList.firstChild);
             }
-        })
+            for (let i = 0; i < Object.keys(data).length; i++) {
+                if (Object.keys(data)[i].includes("v=")) {
+                    makeCheckboxHtml(myList, data, i)
+                    addCheckboxHandlers(Object.values(data)[i], i);
+                }
+            }
+        } else {
+            // console.log("empty storage");
+        }
+    })
         .catch(err => {
             err != null ? console.error(err) : console.log("Unknown Error");
         })
 }
 
+// Radio button selection persists
+function precheckRadioBtn() {
+    readLocalStorage("radio")
+        .then((data) => {
+            let myRadio = document.getElementById(data.toLowerCase());
+            myRadio.checked = "true";
+
+            if (myRadio.value.toLowerCase() == "whitelist") {
+                document.getElementById("postBtn").textContent = "Allow";
+            }
+        })
+        .catch(() => {
+            document.getElementById("split").checked = true;
+        });
+}
+
 // Checkboxes toggle with list
-function toggleChecksDisplay() {
+function toggleChecks() {
     let bulletList = document.getElementById("history");
     let checksList = document.getElementById("checks");
     let button = document.getElementById("checksBtn");
@@ -96,9 +95,7 @@ function toggleChecksDisplay() {
 
 // updates HTML (from storage) and hides whichever was hidden before... probably could load only whichever is currently displayed...
 function updateHtml() {
-    console.log("updateHtml");
     let status = document.getElementById("history").classList.contains("hidden");
-    console.log(status);
 
     fillHtml();
     fillHtmlChecks();
@@ -110,56 +107,25 @@ function updateHtml() {
     }
 }
 
-/* @param pattern matching url */
-async function noAPITitleFromUrl(url) {
-    console.log("noAPITitleFromUrl");
-    let title = "";
-    if (url.length == 13) {
-        url = youtubeString + url;
-    }
-    var response = await fetch(url);
-    switch (response.status) {
-        // status "OK"
-        case 200:
-            let result = await response.blob()
-            console.log(result);
-            await result.text().then(text => {
-                title = text.slice(text.indexOf("<title>") + 7, text.indexOf("</title>"));
-            });
-            console.log(title);
-            return title;
-        // status "Not Found"
-        case 404:
-            console.log('Not Found');
-            return `"${url}" is not a valid video`;
-    }
-}
+function makeCheckboxHtml(insertNode, data, i) {
+    let checkbox = document.createElement("input");
+    let label = document.createElement("label");
+    let copyBtn = document.createElement("button");
+    let clearBtn = document.createElement("button");
 
-//url that matches youtubeVideoPattern and a block status
-async function storagePut(url, block = true) {
-    await readLocalStorage(url)
-        .then(async (data) => {
-            console.log(data);
-            let contentToStore = {};
-            if (data[1].length == 0) {
-                data[1] = await noAPITitleFromUrl(url);
-            }
-            if (block) {
-                contentToStore[url] = ["block", data[1]];
-            } else {
-                contentToStore[url] = ["allow", data[1]];
-            }
-            console.log(contentToStore);
-            browser.storage.local.set(contentToStore);
-        })
-        .catch(async () => {
-            let contentToStore = {}
-            const title = await noAPITitleFromUrl(url);
-            console.log("put as new video: " + title);
-            contentToStore[url] = [`${block ? "block" : "allow"}`, title]
-            console.log(contentToStore);
-            browser.storage.local.set(contentToStore);
-        })
+    checkbox.type = "checkbox"; checkbox.id = `youtubeURL${i}`; checkbox.classList.add("checks");
+    checkbox.checked = Object.values(data)[i][0] == "allow"; checkbox.value = Object.keys(data)[i];
+
+    label.textContent = `${Object.values(data)[i][1] == null ? youtubeString + Object.keys(data)[i] : Object.values(data)[i][1]} : ${Object.values(data)[i][0]}`;
+    label.htmlFor = `youtubeURL${i}`; label.id = `checkboxLabel${i}`;
+
+    copyBtn.id = `copyBtn${i}`; copyBtn.type = "button"; copyBtn.classList.add("btn", "btn-outline-info");
+    copyBtn.textContent = "Copy"; copyBtn.value = Object.keys(data)[i];
+
+    clearBtn.id = `clearBtn${i}`; clearBtn.type = "button"; clearBtn.classList.add("btn", "btn-outline-danger");
+    clearBtn.textContent = "Delete"; clearBtn.value = Object.keys(data)[i];
+
+    insertNode.append(checkbox, label, copyBtn, clearBtn, document.createElement("br"));
 }
 
 //////////////////////////////////////////////
@@ -172,11 +138,9 @@ function addCheckboxHandlers(data, i) {
         document.getElementById(`checkboxLabel${i}`).innerHTML = `${data[1]} : ${urlBlockStatus}`;
 
         browser.storage.local.get(e.target.value).then(data => {
-            console.log(data[e.target.value][1]);
             contentToStore[e.target.value] = [urlBlockStatus, data[e.target.value][1]];
             browser.storage.local.set(contentToStore);
         })
-
     });
     //Buttons
     document.getElementById(`clearBtn${i}`).addEventListener("click", async (e) => {
@@ -190,22 +154,6 @@ function addCheckboxHandlers(data, i) {
     });
 }
 
-function makeCheckboxHtml(insertNode, data, i) {
-    let checkbox = document.createElement("input");
-    let label = document.createElement("label");
-    let copyBtn = document.createElement("button");
-    let clearBtn = document.createElement("button");
-    checkbox.type = "checkbox"; checkbox.id = `youtubeURL${i}`; checkbox.classList.add("checks");
-    checkbox.checked = Object.values(data)[i][0] == "allow"; checkbox.value = Object.keys(data)[i];
-    label.textContent = `${Object.values(data)[i][1] == null ? youtubeString + Object.keys(data)[i] : Object.values(data)[i][1]} : ${Object.values(data)[i][0]}`;
-    label.htmlFor = `youtubeURL${i}`; label.id = `checkboxLabel${i}`;
-    copyBtn.id = `copyBtn${i}`; copyBtn.type = "button"; copyBtn.classList.add("btn", "btn-outline-info");
-    copyBtn.textContent = "Copy"; copyBtn.value = Object.keys(data)[i];
-    clearBtn.id = `clearBtn${i}`; clearBtn.type = "button"; clearBtn.classList.add("btn", "btn-outline-danger");
-    clearBtn.textContent = "Delete"; clearBtn.value = Object.keys(data)[i];
-    insertNode.append(checkbox, label, copyBtn, clearBtn, document.createElement("br"));
-}
-
 //switches radio button status in storage.local
 async function radioButtonHandler(e) {
     e.preventDefault();
@@ -213,40 +161,81 @@ async function radioButtonHandler(e) {
     let contentToStore = {
         radio: val,
     };
+
     if (val === "Whitelist") {
-        await blockmodeInit("Allow");
+        document.getElementById("postBtn").textContent = "Allow";
+        await storageSweep("Allow");
+
     } else if (val === "Blacklist") {
-        await blockmodeInit("Block");
+        document.getElementById("postBtn").textContent = "Block";
+        await storageSweep("Block");
+
     } else if (val == "Split") {
         document.getElementById("postBtn").textContent = "Block";
     }
+
     updateHtml();
     browser.storage.local.set(contentToStore);
 }
 
-// Changes blockmode between dynamic, whitelist and blacklist
-async function blockmodeInit(value) {
-    document.getElementById("postBtn").textContent = value;
+function exportListHandle() {
+    browser.storage.local.get().then(data => {
+        console.log(Object.entries(data));
+        let title = prompt("What title do you want to put on this array?")
+        let contentToStore = {};
+        contentToStore[title] = {};
+        for (let i = 0; i < Object.keys(data).length; i++) {
+            if (Object.keys(data)[i].includes("v=")) {
+                console.log(Object.entries(data)[i]);
+                if (Object.values(data)[i][0] == "block") {
+                    // console.log(data[Object.keys(data)[i]]);
+                    if (contentToStore[title]?.block == null) {
+                        contentToStore[title].block = []
+                        contentToStore[title].block.push(Object.entries(data)[i]);
+                    } else {
+                        contentToStore[title].block.push(Object.entries(data)[i]);
+                    }
 
-    await browser.storage.local
-        .get(null)
-        .then((data) => {
-            let contentToStore = {};
-            for (let i = 0; i < Object.keys(data).length; i++) {
-                if (Object.keys(data)[i].includes("v=")) {
-
-                    contentToStore[Object.keys(data)[i]] = [value.toLowerCase(), Object.values(data)[i][1]];
+                } else if (Object.values(data)[i][0] == "allow") {
+                    if (contentToStore[title]?.allow == null) {
+                        contentToStore[title].allow = []
+                        contentToStore[title].allow.push(Object.entries(data)[i]);
+                    } else {
+                        contentToStore[title].allow.push(Object.entries(data)[i]);
+                    }
                 }
+                console.log(Object.keys(data)[i]);
+            } else {
+                console.log(`${Object.keys(data)[i]} is not a video id`);
             }
-            return contentToStore;
-        })
-        .then((data) => {
-            browser.storage.local.set(data);
-        });
+        }
+        console.log(contentToStore[title]);
+        browser.storage.local.set(contentToStore);
+    })
+}
+
+async function addResourceHandle() {
+    console.log(resourceUrl);
+    let result = {};
+    if (typeof resourceUrl == "undefined" || resourceUrl.length < 1) {
+        result = await interpret();
+    } else {
+        result = await interpret(resourceUrl);
+    }
+    console.log(result);
+    let promiseArray = [];
+    for (let i = 0; i < Object.keys(result).length; i++) {
+        if (Object.values(result)[i] == "allow") {
+            promiseArray.push(storagePut(Object.keys(result)[i], false));
+        } else {
+            promiseArray.push(storagePut(Object.keys(result)[i], true));
+        }
+    }
+    Promise.allSettled(promiseArray).then(updateHtml);
 }
 
 ////////////////////////////////////////////
-/***************Utility Functions**********/
+/***************Helper Functions**********/
 //block button handler for first textbox
 async function writeBlockToBrowser(url, text) {
     console.log("WriteBlockToBrowser");
@@ -255,27 +244,77 @@ async function writeBlockToBrowser(url, text) {
         updateHtml();
     }
 }
+
 function trimYoutubeUrl(url) {
-    console.log(url);
-    let trimUrl;
     if (youtubeVideoPattern.test(url)) {
-        trimUrl = url.slice(url.search("v="))
-    } else if (url.length == 11) {
-        trimUrl = "v=" + url;
-    } else if (url.length == 13) {
-        trimUrl = url;
-    } else if (url.length > 13) {
-        console.log(`${url} is too long, should be "v=" and the next 11 chars`);
-        return "Fail"
-    } else if (url.length < 11 || url.length == 12) {
-        console.log(`${url} is too short, should be "v=" and the next 11 chars`);
+        return url.slice(url.search("v="))
+    } else if (url.length == 13 && url.includes("v=")) {
+        if (new RegExp(/[~`!#$%\^&*+=\[\]\\';,/{}|\\":<>\?]/g).test(url.slice(2))) {//prevent v=...&c=...
+            return "Fail"
+        } else {
+            return url
+        }
+    } else {
         return "Fail";
     }
-    if (new RegExp(/[~`!#$%\^&*+=\[\]\\';,/{}|\\":<>\?]/g).test(trimUrl.slice(2))) {
-        return "Fail"
-    } else {
-        return trimUrl
+}
+
+//url that matches youtubeVideoPattern and a block status
+async function storagePut(url, block = true) {
+    await readLocalStorage(url)
+        .then(async (data) => {
+            let contentToStore = {};
+            if (data[1].length == null) {
+                data[1] = await noAPITitleFromUrl(url);
+            }
+            contentToStore[url] = [`${block ? "block" : "allow"}`, data[1]];
+            browser.storage.local.set(contentToStore);
+        })
+        .catch(async () => {
+            let contentToStore = {}
+            const title = await noAPITitleFromUrl(url);
+            contentToStore[url] = [`${block ? "block" : "allow"}`, title];
+            browser.storage.local.set(contentToStore);
+        })
+}
+
+/* @param pattern matching url */
+async function noAPITitleFromUrl(url) {
+    let title = "";
+    if (url.length == 13) {
+        url = youtubeString + url;
+    } else if (!pattern.test(url)) {
+        return "Invalid video";
     }
+    var response = await fetch(url);
+    switch (response.status) {
+        // status "OK"
+        case 200:
+            let result = await response.blob()
+            await result.text().then(text => {
+                title = text.slice(text.indexOf("<title>") + 7, text.indexOf("</title>"));
+            });
+            return title;
+        // status "Not Found"
+        case 404:
+            console.log('Not Found');
+            return `"${url}" is not a valid video`;
+    }
+}
+
+// Changes every video stored to block or allow
+async function storageSweep(value) {
+    await browser.storage.local.get(null)
+        .then((data) => {
+            let contentToStore = {};
+            for (let i = 0; i < Object.keys(data).length; i++) {
+                if (Object.keys(data)[i].includes("v=")) {
+                    contentToStore[Object.keys(data)[i]] = [value.toLowerCase(), Object.values(data)[i][1]];
+                }
+            }
+            browser.storage.local.set(contentToStore);
+        })
+        .catch(err => console.error(err));
 }
 
 const readLocalStorage = async (key) => {
@@ -290,119 +329,53 @@ const readLocalStorage = async (key) => {
     });
 };
 
-function clearHtmlList(list) {
-    while (list.firstChild) {
-        list.removeChild(list.firstChild);
-    }
-}
-
-function handleIDsPut() {
-    let id = (url.slice(url.search("v=") + 2, url.search("v=") + 13));
-
-}
-function handleIDsPop() {
-
-}
-
 //Executable code
-(() => {
-    /**
-   * Init function that sets browser extension UI event listeners
-   */
-    let youtubeUrl = "";
-    let resourceUrl = "";
-    const blockButton = document.getElementById("postBtn");
-    const blockUrlInputField = document.getElementById("blockUrl");
-    const checkToggleButton = document.getElementById("checksBtn");
-    const exportListButton = document.getElementById("exportBtn");
-    const clearStorageButton = document.getElementById("strClearBtn");
-    const resourceFetchInputField = document.getElementById("resourceFetch");
-    const addResourceButton = document.getElementById("strLoadBtn");
-    const radios = document.getElementById("proxy_style_form");
+//(() => {
+/**
+* Initalize function that sets browser extension UI event listeners
+*/
+let youtubeUrl = "";
+let resourceUrl = "";
+const blockButton = document.getElementById("postBtn");
+const blockUrlInputField = document.getElementById("blockUrl");
+const checkToggleButton = document.getElementById("checksBtn");
+const exportListButton = document.getElementById("exportBtn");
+const clearStorageButton = document.getElementById("strClearBtn");
+const resourceFetchInputField = document.getElementById("resourceFetch");
+const addResourceButton = document.getElementById("strLoadBtn");
+const radios = document.getElementById("proxy_style_form");
 
-    blockButton.addEventListener("click", (e) => {
-        if (youtubeUrl) {
-            writeBlockToBrowser(youtubeUrl, blockButton.textContent);
-        }
-    });
-    blockUrlInputField.addEventListener("change", (e) => {
-        youtubeUrl = e.target.value;
-    });
+blockButton.addEventListener("click", (e) => {
+    if (youtubeUrl) {
+        writeBlockToBrowser(youtubeUrl, blockButton.textContent);
+    }
+});
+blockUrlInputField.addEventListener("change", (e) => {
+    youtubeUrl = e.target.value;
+});
 
-    checkToggleButton.addEventListener("click", toggleChecksDisplay);
-    exportListButton.addEventListener("click", () => {
-        browser.storage.local.get().then(data => {
-            console.log(Object.entries(data));
-            let title = prompt("What title do you want to put on this array?")
-            let contentToStore = {};
-            contentToStore[title] = {};
-            for (let i = 0; i < Object.keys(data).length; i++) {
-                if (Object.keys(data)[i].includes("v=")) {
-                    console.log(Object.entries(data)[i]);
-                    if (Object.values(data)[i][0] == "block") {
-                        // console.log(data[Object.keys(data)[i]]);
-                        if (contentToStore[title]?.block == null) {
-                            contentToStore[title].block = []
-                            contentToStore[title].block.push(Object.entries(data)[i]);
-                        } else {
-                            contentToStore[title].block.push(Object.entries(data)[i]);
-                        }
+checkToggleButton.addEventListener("click", toggleChecks);
+exportListButton.addEventListener("click", exportListHandle)
 
-                    } else if (Object.values(data)[i][0] == "allow") {
-                        if (contentToStore[title]?.allow == null) {
-                            contentToStore[title].allow = []
-                            contentToStore[title].allow.push(Object.entries(data)[i]);
-                        } else {
-                            contentToStore[title].allow.push(Object.entries(data)[i]);
-                        }
-                    }
-                    console.log(Object.keys(data)[i]);
-                } else {
-                    console.log(`${Object.keys(data)[i]} is not a video id`);
-                }
-            }
-            console.log(contentToStore[title]);
-            browser.storage.local.set(contentToStore);
-        })
-    })
-    clearStorageButton.addEventListener("click", async () => {
-        browser.storage.local.get().then((data) => {
-            let promiseArray = [];
-            for (let i = 0; i < Object.keys(data).length; i++) {
-                if (Object.keys(data)[i].includes("v=")) {
-                    promiseArray.push(browser.storage.local.remove(Object.keys(data)[i]));
-                }
-            }
-            Promise.allSettled(promiseArray).then(updateHtml);
-        })
-    });
-
-    addResourceButton.addEventListener("click", async () => {
-        console.log(resourceUrl);
-        let result = {};
-        if (typeof resourceUrl == "undefined" || resourceUrl.length < 1) {
-            result = await interpret();
-        } else {
-            result = await interpret(resourceUrl);
-        }
+clearStorageButton.addEventListener("click", async () => {
+    browser.storage.local.get().then((data) => {
         let promiseArray = [];
-        for (let i = 0; i < Object.keys(result).length; i++) {
-            if (Object.values(result)[i] == "allow") {
-                promiseArray.push(storagePut(Object.keys(result)[i], false));
-            } else {
-                promiseArray.push(storagePut(Object.keys(result)[i], true));
+        for (let i = 0; i < Object.keys(data).length; i++) {
+            if (Object.keys(data)[i].includes("v=")) {
+                promiseArray.push(browser.storage.local.remove(Object.keys(data)[i]));
             }
         }
         Promise.allSettled(promiseArray).then(updateHtml);
-    });
-    resourceFetchInputField.addEventListener("change", (e) => {
-        resourceUrl = e.target.value;
-    });
+    })
+});
 
-    radios.addEventListener("change", radioButtonHandler);
-    fillHtml();
-    radioInit();
-})();
+addResourceButton.addEventListener("click", addResourceHandle);
 
-//https://www.geeksforgeeks.org/how-to-add-a-custom-right-click-menu-to-a-webpage/ - Remove and copy?
+resourceFetchInputField.addEventListener("change", (e) => {
+    resourceUrl = e.target.value;
+});
 
+radios.addEventListener("change", radioButtonHandler);
+fillHtml();
+precheckRadioBtn();
+//})();

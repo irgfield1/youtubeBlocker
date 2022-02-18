@@ -198,14 +198,11 @@ function trimYoutubeUrl(url) {
     if (youtubeVideoPattern.test(url)) {
         return url.slice(url.search("v="))
     } else if (url.length == 13 && url.includes("v=")) {
-        if (new RegExp(/[~`!#$%\^&*+=\[\]\\';,/{}|\\":<>\?]/g).test(url.slice(2))) {
+        if (new RegExp(/[~`!#$%\^&*+=\[\]\\';,/{}|\\":<>\?]/g).test(url.slice(2))) {//prevent v=...&c=...
             return "Fail"
         } else {
             return url
         }
-    } else if (url.includes("youtube")) {
-        //youtube but not a standalone video
-        return "Fail"
     } else {
         // Not youtube
         return "Fail";
