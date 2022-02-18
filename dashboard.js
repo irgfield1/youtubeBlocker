@@ -86,9 +86,9 @@ async function applyResourceListener(e) {
     let resourceUrl = e.target.value
     let result = {};
     if (typeof resourceUrl == "undefined" || resourceUrl.length < 1) {
-        result = await interpret();
+        result = await readAsset();
     } else {
-        result = await interpret(resourceUrl);
+        result = await readAsset(resourceUrl);
     }
     console.log(result);
 
@@ -223,9 +223,9 @@ addResourceButton.addEventListener("click", async () => {
     console.log(resourceUrl);
     let result = {};
     if (typeof resourceUrl == "undefined" || resourceUrl.length < 1) {
-        result = await interpret();
+        result = await readAsset();
     } else {
-        result = await interpret(resourceUrl);
+        result = await readAsset(resourceUrl);
     }
     console.log(result);
     if (result?.title != null) {//potential error point, not every json with a title fits scheme

@@ -218,9 +218,9 @@ async function addResourceHandle() {
     console.log(resourceUrl);
     let result = {};
     if (typeof resourceUrl == "undefined" || resourceUrl.length < 1) {
-        result = await interpret();
+        result = await readAsset();
     } else {
-        result = await interpret(resourceUrl);
+        result = await readAsset(resourceUrl);
     }
     console.log(result);
     let promiseArray = [];
