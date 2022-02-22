@@ -1,63 +1,63 @@
 let youtubeVideoPattern =
     /(http(s)??\:\/\/)?(www\.)?((youtube\.com\/watch\?v=)|(youtu.be\/))([a-zA-Z0-9\-_])+/;
 
-async function interpret(textAsset = "assets/blockfolder/data.txt") {
-
+async function readAsset(textAsset = "assets/blockfolder/data.txt") {
     textAsset = textAsset.replace(/\\+/g, "/");
-    console.log(textAsset);
     let content = await fetchStorage(textAsset);
 
-    console.log(content);
     let contentToStore = {};
     for (let i = 0; i < Object.keys(content).length; i++) {
         if (Object.keys(content)[i].toLowerCase() == "allow") {
             for (let j = 0; j < Object.values(content)[i].length; j++) {
-                contentToStore[Object.values(content)[i][j]] = "allow";
+                let url = trimYoutubeUrl(Object.values(content)[i][j]);
+                contentToStore[url] = "allow";
             }
         } else if (Object.keys(content)[i].toLowerCase() == "block") {
             for (let j = 0; j < Object.values(content)[i].length; j++) {
-                contentToStore[Object.values(content)[i][j]] = "block";
+                let url = trimYoutubeUrl(Object.values(content)[i][j]);
+                contentToStore[url] = "block";
             }
         } else if (Object.keys(content)[i].toLowerCase() == "title") {
-            console.log(Object.values(content)[i]);
             contentToStore.title = Object.values(content)[i];
         } else if (Object.keys(content)[i].toLowerCase() == "tags") {
             contentToStore.tags = Object.values(content)[i];
         } else {
+            console.log("Invalid JSON key in key : value pair");
             continue;
         }
     }
-    console.log(contentToStore);
 
-    return contentToStore;
-}
-
-function arrayify(myString) {
-    let contentToStore = {};
-    let blockStatus = [myString.substring(myString.indexOf(":="), -1)];
-    myString = myString.substring(myString.indexOf(":=") + 2).trim();
-    myString = myString.split(",").map((s) => s.trim());
-    contentToStore[blockStatus] = myString;
     return contentToStore;
 }
 
 async function fetchStorage(textAsset) {
-    console.log(textAsset);
     let contentToStore = {};
 
     await fetch(textAsset).then(
         async (data) => {
-            console.log(data);
             let dataReader = data.body.getReader();
             let codedText = await dataReader.read();
             const utf8Decoder = new TextDecoder("utf-8");
             let plainText = utf8Decoder.decode(codedText?.value);
             contentToStore = JSON.parse(plainText);
-            console.log(contentToStore);
         },
         (err) => {
             console.error(err);
         }
     );
     return contentToStore;
+}
+
+function trimYoutubeUrl(url) {
+    if (youtubeVideoPattern.test(url)) {
+        return url.slice(url.search("v="))
+    } else if (url.length == 13 && url.includes("v=")) {
+        if (new RegExp(/[~`!#$%\^&*+=\[\]\\';,/{}|\\":<>\?]/g).test(url.slice(2))) {//prevent v=...&c=...
+            return "Fail"
+        } else {
+            return url
+        }
+    } else {
+        return "Fail";
+    }
 }
