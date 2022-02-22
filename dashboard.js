@@ -54,13 +54,12 @@ function addList2(data, location, listenerFun) {
 }
 
 function localButtonHandler(e) {
-    console.log(e.target.id);
+    console.log(e.target);
+    console.log(document.getElementById(e.target.id));
     let key = e.target.value;
     console.log("key");
     clearVideos();
     browser.storage.local.get(key).then(async resData => {
-        console.log(resData);
-        console.log(resData[key]);
         if (resData[key].allow != null) {
             for (let i = 0; i < resData[key].allow.length; i++) {
                 let contentToStore = {};
@@ -77,7 +76,22 @@ function localButtonHandler(e) {
                 await browser.storage.local.set(contentToStore)
             }
         }
-    })
+    });
+    let oldList = document.querySelector(".btn-info");
+    if (oldList != null) {
+        oldList.classList.remove("btn-info");
+        oldList.classList.add("btn-outline-info");
+        oldList.textContent = "Apply Resource";
+    }
+    // let buttons = document.querySelectorAll(".btn");
+    // for (let i = 0; i < buttons.length; i++) {
+    //     buttons[i].classList.remove("btn-info");
+    //     buttons[i].classList.add("btn-outline-info");
+    //     buttons[i].textContent = "Apply Resource"
+    // }
+    e.target.classList.add("btn-info");
+    e.target.classList.remove("btn-outline-info");
+    e.target.textContent = "Current List"
 }
 
 async function applyResourceListener(e) {
@@ -101,7 +115,16 @@ async function applyResourceListener(e) {
             promiseArray.push(storagePut(Object.keys(result)[i], true));
         }
     }
-    Promise.allSettled(promiseArray);
+    await Promise.allSettled(promiseArray);
+    let oldList = document.querySelector(".btn-info");
+    if (oldList != null) {
+        oldList.classList.remove("btn-info");
+        oldList.classList.add("btn-outline-info");
+        oldList.textContent = "Apply Resource";
+    }
+    e.target.classList.add("btn-info");
+    e.target.classList.remove("btn-outline-info");
+    e.target.textContent = "Current List"
 
 }
 
