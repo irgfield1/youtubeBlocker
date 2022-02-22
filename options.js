@@ -227,7 +227,7 @@ async function addResourceHandle() {
     for (let i = 0; i < Object.keys(result).length; i++) {
         if (Object.values(result)[i] == "allow") {
             promiseArray.push(storagePut(Object.keys(result)[i], false));
-        } else {
+        } else if (Object.values(result)[i] == "block") {
             promiseArray.push(storagePut(Object.keys(result)[i], true));
         }
     }

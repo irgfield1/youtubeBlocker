@@ -33,31 +33,38 @@ function write2Browser() {
 
 //Sets currentTabBlock for active tab, so it only runs the logic once while you're on the page
 async function setTabBlock() {
-    await browser.tabs.query({ active: true }).then(async (tabs) => {
-        if (youtubeVideoPattern.test(tabs[0].url.slice())) {
-            let tempUrl = trimYoutubeUrl(tabs[0].url.slice());
-            if (tempUrl == "Fail") {
+    await browser.tabs.query({ active: true })
+        .then(async (tabs) => {
+            if (youtubeVideoPattern.test(tabs[0].url.slice())) {
+                let tempUrl = trimYoutubeUrl(tabs[0].url.slice());
+                if (tempUrl == "Fail") {
+                    currentTabBlock = false;
+                }
+                await readLocalStorage(tempUrl).then(
+                    (data) => {
+                        //found in storage
+                        currentTabBlock = (data[0] == "allow" ? false : true);
+                    }).catch(async () => {
+                        //not found in storage
+                        if (typeof radioStatus == "undefined") {
+                            readLocalStorage("radio")
+                                .then(data => radioStatus = data.toLowerCase())
+                                .catch(() => {
+                                    radioStatus = "split";
+                                    currentTabBlock = false;
+                                });
+
+                        }
+                        if (radioStatus == "blacklist") {
+                            currentTabBlock = false;
+                        } else if (radioStatus == "whitelist") {
+                            currentTabBlock = true
+                        }
+                    });
+            } else {
                 currentTabBlock = false;
             }
-            await readLocalStorage(tempUrl).then(
-                (data) => {
-                    //found in storage
-                    currentTabBlock = (data[0] == "allow" ? false : true);
-                },
-                async () => {
-                    //not found in storage
-                    if (typeof radioStatus == "undefined") {
-                        radioStatus = (await readLocalStorage("radio")).toLowerCase();
-                    }
-                    if (radioStatus == "blacklist") {
-                        currentTabBlock = false;
-                    } else if (radioStatus == "whitelist") {
-                        currentTabBlock = true
-                    }
-                }
-            );
-        }
-    })
+        })
         .catch(err => console.error(err));
 }
 
@@ -79,9 +86,9 @@ function greenTab() {
                 () => {
                     //Not in storage
                     if (radioStatus == "whitelist") {
-                        browser.tabs.sendMessage(tab.id, { cover: false });
+                        browser.tabs.sendMessage(tab.id, { cover: true });
                     } else {
-                        browser.tabs.sendMessage(tab.id, { cover: true })
+                        browser.tabs.sendMessage(tab.id, { cover: false })
                     }
                 });
         }
@@ -129,18 +136,31 @@ async function blockSideTab(requestInfo) {
             return await readLocalStorage(trimYoutubeUrl(tab?.url)).then((data) => {
                 //found in storage
                 return data[0] == "allow";
-            }, async () => {
+            }).catch(async () => {
                 if (typeof radioStatus == "undefined") {
-                    radioStatus = (await readLocalStorage("radio")).toLowerCase();
+                    return readLocalStorage("radio")
+                        .then(data => {
+                            radioStatus = data.toLowerCase();
+                            if (radioStatus == "blacklist") {
+                                return false;
+                            } else if (radioStatus == "whitelist") {
+                                return true
+                            }
+                        })
+                        .catch(() => {
+                            radioStatus = "split";
+                            return false;
+                        });
+
                 }
                 if (radioStatus == "blacklist") {
                     return false;
                 } else if (radioStatus == "whitelist") {
-                    return true
+                    return true;
                 }
-            }
-            )
-        }).catch(err => console.error(err));
+
+            });
+        });
     }
 }
 
@@ -216,12 +236,12 @@ function trimYoutubeUrl(url) {
 /**************LISTENERS************************/
 browser.tabs.onActivated.addListener(async () => {
     write2Browser();
-    setTabBlock();
+    await setTabBlock();
     greenTab();
 });
-browser.tabs.onUpdated.addListener(() => {
+browser.tabs.onUpdated.addListener(async () => {
     write2Browser();
-    setTabBlock();
+    await setTabBlock();
     greenTab();
 });
 
